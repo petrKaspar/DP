@@ -35,7 +35,7 @@ namespace PRO_camera_Test{
 
         //-------konfigurace NXT blokuu -------
         FilterInfoCollection filterInfColl;
-        private VideoCaptureDevice videoDevice;
+        public VideoCaptureDevice videoDevice;
         MotionDetector motionDetector;
         float f;
         private static int thresholdBG, blobMinWidth = 40, blobMinHeight = 40;
@@ -43,7 +43,7 @@ namespace PRO_camera_Test{
         public int qqq;
         static int blobArea = 0;
         static int minBlobArea;
-
+        private static bool rotateDone = false, stopStartVideo=true;
         Thread thread1;
         internal void setCropRectangle() {
             Console.WriteLine(qqq);
@@ -81,6 +81,7 @@ namespace PRO_camera_Test{
                         }
                         comboBoxMode.SelectedIndex = 0;
                         */
+            getHueFromRGB(66, 153, 8);
         }
 
         private void btnStart_Click(object sender, EventArgs e) {
@@ -93,20 +94,57 @@ namespace PRO_camera_Test{
             //System.Threading.Thread.Sleep(5000);
             thread1 = new Thread(new ThreadStart(motoryPasuuZvedak));
 
-
-
             for (int i = 0; i < videoDevice.VideoCapabilities.Length; i++) {
-
 
                 string resolution = "Resolution Number " + Convert.ToString(i)+"\n";
                 string resolution_size = videoDevice.VideoCapabilities[i].FrameSize.ToString();
 
                 Console.WriteLine(resolution+ resolution_size);
             }
-            videoDevice.VideoResolution = videoDevice.VideoCapabilities[2];
+            videoDevice.VideoResolution = videoDevice.VideoCapabilities[14];
             videoSourcePlayer1.VideoSource = videoDevice;
-
-         //   videoSourcePlayer1.NewFrame +=  new AForge.Controls.VideoSourcePlayer.NewFrameHandler(videoSourcePlayer1_NewFrame);
+            stopStartVideo = true;
+            /**
+            Resolution Number 0
+            {Width=640, Height=480}
+            Resolution Number 1
+            {Width=160, Height=90}
+            Resolution Number 2
+            {Width=160, Height=120}
+            Resolution Number 3
+            {Width=176, Height=144}
+            Resolution Number 4
+            {Width=320, Height=180}
+            Resolution Number 5
+            {Width=320, Height=240}
+            Resolution Number 6
+            {Width=352, Height=288}
+            Resolution Number 7
+            {Width=432, Height=240}
+            Resolution Number 8
+            {Width=640, Height=360}
+            Resolution Number 9
+            {Width=800, Height=448}
+            Resolution Number 10
+            {Width=800, Height=600}
+            Resolution Number 11
+            {Width=864, Height=480}
+            Resolution Number 12
+            {Width=960, Height=720}
+            Resolution Number 13
+            {Width=1024, Height=576}
+            Resolution Number 14
+            {Width=1280, Height=720}
+            Resolution Number 15
+            {Width=1600, Height=896}
+            Resolution Number 16
+            {Width=1920, Height=1080}
+            Resolution Number 17
+            {Width=2304, Height=1296}
+            Resolution Number 18
+            {Width=2304, Height=1536}
+*/
+           // videoSourcePlayer1.NewFrame +=  new AForge.Controls.VideoSourcePlayer.NewFrameHandler(videoSourcePlayer1_NewFrame);
             videoSourcePlayer1.Start();
 
             /*if (videoSourcePlayer1.IsRunning) {
@@ -116,7 +154,7 @@ namespace PRO_camera_Test{
             thread1.Start();
             //Form1 thread1 = new Form1();
             //new Thread(thread1.motoryPasuuZvedak).Start();
-
+            
         }
 
         private void btnStop_Click(object sender, EventArgs e) {
@@ -124,18 +162,16 @@ namespace PRO_camera_Test{
                 videoSourcePlayer1.Stop();
                 stop = true;
             }
-            //thread1.Abort();
-            //Color myColor = Color.FromArgb(0, 255, 0);
-            //Console.WriteLine(myColor.GetHue() + " - HHHHHHHHHHHHHHHHHHHHHHHHHHH");
         }
 
         private static Bitmap removeBackground(Bitmap image) {
             // lock image
-          /*  BitmapData bitmapData = image.LockBits(
-                new Rectangle(0, 0, image.Width, image.Height),
-                ImageLockMode.ReadWrite, image.PixelFormat);*/
+            /*  BitmapData bitmapData = image.LockBits(
+                  new Rectangle(0, 0, image.Width, image.Height),
+                  ImageLockMode.ReadWrite, image.PixelFormat);*/
 
             // odstraneni cerneho pozadi
+
             ColorFiltering colorFilter = new ColorFiltering();
 
             colorFilter.Red = new IntRange(0, thresholdBG);
@@ -172,6 +208,7 @@ namespace PRO_camera_Test{
             // pozdeji treba switch
             if (checkBox1RemBack.Checked || automaticRun) { 
                 bitmap2 = removeBackground(bitmap2);
+
             }
 
             if(checkBox2Blob.Checked || automaticRun) {
@@ -225,9 +262,32 @@ namespace PRO_camera_Test{
                            brick.Disconnect();
 
                    */
-            brick.MotorA = new NxtMotor();
-            brick.MotorB = new NxtMotor();
-            brick.MotorC = new NxtMotor();
+                   /*
+                   //,,,,,,,,,,,,,,,,,,,,,,,,,,
+            Thread.Sleep(7000);
+            this.Invoke((MethodInvoker)delegate {
+                Bitmap bbb;
+                if (videoSourcePlayer1.IsRunning) {
+                    videoSourcePlayer1.Stop();
+                    stop = true;
+                }
+                Thread.Sleep(500);
+                videoDevice.VideoResolution = videoDevice.VideoCapabilities[6];//14 { Width = 1280, Height = 720}
+                videoSourcePlayer1.VideoSource = videoDevice;
+                videoSourcePlayer1.Start();
+                Thread.Sleep(6000);
+                bbb = (Bitmap)videoSourcePlayer1.GetCurrentVideoFrame().Clone();
+                Bitmap current = bbb;
+                string filepath = Environment.CurrentDirectory;
+                string fileName = System.IO.Path.Combine(filepath, @"name.bmp");
+                bbb.Save(fileName);
+                bbb.Dispose();
+            });
+            //,,,,,,,,,,,,,,,,,,,,,,,,,,
+            */
+            brick.MotorA = new NxtMotor();//**************zvedak /
+            brick.MotorB = new NxtMotor(); // pas 2 (ten nizsi, jednoduchy)
+            brick.MotorC = new NxtMotor(); // pas 1 (nahore)
 
             // Poll it every 50 milliseconds.
             brick.MotorA.PollInterval = 10;
@@ -254,7 +314,7 @@ namespace PRO_camera_Test{
 
             //while (true) { 
             // if (brick2.IsConnected) {
-            brick.MotorA.Run(-15, 0);
+            //brick.MotorA.Run(-15, 0);
             brick.MotorB.Run(-15, 0);
             brick.MotorC.Run(-20, 0);
             Console.WriteLine("run1 blobArea: " + Form1.blobArea);
@@ -266,35 +326,105 @@ namespace PRO_camera_Test{
                  //     Console.WriteLine("TachC: " + brick.MotorA.TachoCount);
              } else {*/
                 //brick.MotorA.Run(-30, 0);
+                //=========================== Prisela kostka lega ================================================
                 if (Form1.blobArea > minBlobArea || Form1.stop) {
-                    brick.MotorA.Brake();
-                    brick.MotorB.Brake();
-                    brick.MotorC.Brake();
-
-
-                    /**********************************  vyklapeni a zklapeni
-                   brick.MotorA.Brake();
+                  //  brick.MotorA.Brake();//**************zvedak
+                    brick.MotorB.Brake();// pas 2 (dole)
+                    brick.MotorC.Brake();// pas 1 (nahore)
+                    //**********************************  vyklapeni a zklapeni
                    // Thread.Sleep(milliseconds);
-                   Thread.Sleep(500);
-                   brick.MotorB.Run(25, 45);
+                   Thread.Sleep(400);
+
+                    //-------------------------- Zajisteni kvalitnejsiho obrazu -----------------------
+
+                    /*
+                    this.Invoke((MethodInvoker)delegate {
+                        Bitmap bbb;
+                        if (videoSourcePlayer1.IsRunning) {
+                            videoSourcePlayer1.Stop();
+                            stop = true;
+                        }
+                        Thread.Sleep(500);
+                        videoDevice.VideoResolution = videoDevice.VideoCapabilities[6];//14 { Width = 1280, Height = 720}
+                        videoSourcePlayer1.VideoSource = videoDevice;
+                        videoSourcePlayer1.Start();
+                        bbb= (Bitmap)videoSourcePlayer1.GetCurrentVideoFrame().Clone();
+                        Bitmap current = (Bitmap)bbb.Clone();
+                        string filepath = Environment.CurrentDirectory;
+                        string fileName = System.IO.Path.Combine(filepath, @"name.bmp");
+                        current.Save(fileName);
+                        current.Dispose();
+                    });
+                    */
+                    
+                    //-------------------------- //Zajisteni kvalitnejsiho obrazu -----------------------
+
+                    // getAVG_Hue();   // musi se tu provest pocitani HUE a pak se vypne kamera a pripoji s dobrym rozlisenim
+
+                    //btnStopEvent();
+
+                    // je tu promennna 'rotateDone', ktera se  zmeni na true, kdyz dokonci otoceni buxu na ten spravny
+                    Box();  //provede se otoceni krabicek na tu spravnou
+                    while (rotateDone) {
+                        Thread.Sleep(50);
+                    }
+
+                    
+
+                    //richTextBox2.Text = "average hue = " + getAVG_Hue();
+                    brick.MotorA.Run(25, 45);
                    Thread.Sleep(1000);
-                   brick.MotorB.Run(-25, 45);
+                   brick.MotorA.Run(-25, 45);
                    Thread.Sleep(1000);
-                   **************************************/
+                   //**************************************/
                 } else {
                     //   Thread.Sleep(milliseconds);
                     // brick.MotorA.Run(-30, 30);
-                    brick.MotorA.Run(-15, 0);
+                   // brick.MotorA.Run(-15, 0);//***********
                     brick.MotorB.Run(-15, 0);
                     brick.MotorC.Run(-20, 0);
                 }
+                //=========================== //Prisela kostka lega ===================================================
                 // }
             }
-            
+
 
             //   brick.Disconnect();
         }
-        // ================== Ovladani NXT ===================
+
+        private void Box() {
+            int b=0,a=0;
+            if (a != b) { 
+                switch (a) {
+                    case 0:
+                        Console.WriteLine("case 0");
+                        if(b == 1) {
+
+                        }else if(b == 2) {
+
+                        } else {
+
+                        }
+                        //goto case 1;
+                        b = a;
+                        break;
+                    case 1:
+                        Console.WriteLine("case 1");
+                        break;
+                    case 2:
+                        Console.WriteLine("case 2");
+                        break;
+                    case 3:
+                        Console.WriteLine("case 3");
+                        break;
+                    default:
+                        Console.WriteLine("a is not set");
+                        break;
+                }
+            }
+        }
+
+        // ================== \Ovladani NXT ===================
 
         private Bitmap BlobDetection (Bitmap bitmap) {
             // create an instance of blob counter algorithm
@@ -312,6 +442,7 @@ namespace PRO_camera_Test{
                 // extract the biggest blob
                 //pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
                 //pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
+                
                 if (blobs.Length > 0) {
                     blobCounter.ExtractBlobsImage(bitmap, blobs[0], true);
 
@@ -401,7 +532,7 @@ namespace PRO_camera_Test{
         }
 
 
-        private int getAVG(Bitmap bitmap) {
+        private int getAVG_Hue(Bitmap bitmap) {
             int width = bitmap.Width;
             int height = bitmap.Height;
             int[] hueValues = new int[width * height];
@@ -412,18 +543,25 @@ namespace PRO_camera_Test{
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < height; y++) {
                     myColor = bitmap.GetPixel(x, y);
+                    
                     //Color c = BitmapRGBtoGRAY.GetPixel(j, i);// Extract the color of a pixel 
                     //int rd = c.R; int gr = c.G; int bl = c.B;// extract the red,green, blue components from the color.
                     //GRAY = 0.2989 * RED + 0.5870 * GREEN + 0.1140 * BLUE
                     grayValueD = 0.2989 * (double)myColor.R + 0.5870 * (double)myColor.G + 0.1140 * (double)myColor.B;
                     grayValue = (int)Math.Round(grayValueD);
                     //Console.WriteLine(grayValue + " - grayValue");
-                    if (grayValue > 170) {// || grayValue > 245
-                        hueValues[i] = 0;
+                   if (grayValue > 10 && grayValue < 245) {// || grayValue > 245 ; > 170
+                                        //hueValues[i] = 0;
+                                        //richTextBox2.Text = getHueFromRGB((int)myColor.R, (int)myColor.G, (int)myColor.B) + " - Hue" + richTextBox2.Text;
+                        //Console.WriteLine(getHueFromRGB((int)myColor.R, (int)myColor.G, (int)myColor.B)+"-hue; ");
+                        //Console.WriteLine((int)myColor.R+" "+ (int)myColor.G+" "+ (int)myColor.B);
+                        hueValues[i] = getHueFromRGB((int)myColor.R, (int)myColor.G, (int)myColor.B);
                         //Console.WriteLine(grayValue+ " - Console.WriteLine");
-                    } else {
+                    }/* else {
                         hueValues[i] = (int)myColor.GetHue();
-                    }
+                    }*/
+
+                    
                     i++;
                 }
             }
@@ -439,6 +577,8 @@ namespace PRO_camera_Test{
             if (n != 1) n--;
 
             avg = sum / n;
+            richTextBox2.Text = avg + " - pruper vlastni\n"+ richTextBox2.Text ;
+            //richTextBox2.Text = hueValues.Average() + " - pruper\n"+ richTextBox2.Text ;
             Console.WriteLine(avg + " - pruper vlastni");
             Console.WriteLine(hueValues.Average() + " - pruper");
             Console.WriteLine(hueValues.Max() + " - max");
@@ -454,7 +594,7 @@ namespace PRO_camera_Test{
             //pictureBox1.Image = removeBackground((Bitmap)pictureBox2.Image);
             pictureBox1.Image = pictureBox2.Image;
 
-            richTextBox1.Text = getAVG(bitmap) + "\n" + richTextBox1.Text + "\n";
+            richTextBox1.Text = getAVG_Hue(bitmap) + "\n" + richTextBox1.Text + "\n";
 
             blobArea = 6000;
 
@@ -485,6 +625,34 @@ namespace PRO_camera_Test{
         private void numericUpDown1_ValueChanged(object sender, EventArgs e) {
             thresholdBG = (int)numericUpDown1Bakground.Value;
         }
+
+        private int getHueFromRGB(int r, int g, int b) {
+            // Console.WriteLine(r + " r " + g);
+            float r2=r / 255.0f, g2 = g / 255.0f, b2 =b/ 255.0f;
+            
+          //  Console.WriteLine(r + " r " + g);
+            int max = Math.Max(r, Math.Max( g, b)), min = Math.Min(r, Math.Min(g, b));
+            float max2 = Math.Max(r2, Math.Max( g2, b2)), min2 = Math.Min(r2, Math.Min(g2, b2));
+            //Console.WriteLine(max+" "+max2+" maaaax "+min+" "+min2);
+            //Console.WriteLine(r2 + " " + g2 + " rrrrrrrrr " + b2 + " " + 153.0/255.0);
+            //var h, s, l = (max + min) / 2;
+            int hue;
+            if (max == min) {
+                hue = 0; 
+            } else {
+                if (max == r) {
+                    hue =  (int)(60*((g2 - b2) / (max2 - min2)  ) + (g < b ? 6.0 : 0.0));//+(g < b ? 6 : 0)
+                } else if (max==g) {
+                    hue =  (int)(60 * (((b2 - r2) / (max2 - min2)) + 2.0));
+                } else {
+                    hue =  (int)(60 * (((r2 - g2) / (max2 - min2)) + 4.0) );
+                }
+            }
+           // Console.WriteLine("hue = "+hue);
+           // richTextBox1.Text = richTextBox1.Text + "hue = " + hue+"\n";
+            return hue;
+        }
+
 
 
         private Bitmap RGBtoGRAYConversion(Bitmap BitmapRGBtoGRAY) {
