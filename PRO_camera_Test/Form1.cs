@@ -19,7 +19,12 @@ using AForge.Math;
 using System.Threading;
 using NKH.MindSqualls;
 using NKH.MindSqualls.MotorControl;
-
+using System.Diagnostics;
+/*
+u kazdeho blobu ukazat hue a size
+rozpoznat, o jakou kosticku se jedna pomoci velikosti
+zkusit ukladat obr i s alfa kanalem
+*/
 namespace PRO_camera_Test{
     public partial class Form1 : Form{
         public Form1(){
@@ -45,6 +50,8 @@ namespace PRO_camera_Test{
         static int minBlobArea;
         private static bool rotateDone = false, stopStartVideo=true;
         Thread thread1;
+        private string directoryPath = @".\";//ukladaji se sem sejmute obrazky
+        private string biggestBlobInfo = "";//vykresli se do pictureBoxu2 info o objektu (hue a size)
         internal void setCropRectangle() {
             Console.WriteLine(qqq);
         }
@@ -63,8 +70,16 @@ namespace PRO_camera_Test{
             minBlobArea = (int)numUpDownMinBlobSize.Value;
             blobMinWidth = (int)numericUpDown2BlobSizeW.Value;
             blobMinHeight = (int)numericUpDown3BlobSizeH.Value;
+/*
+            for (int i = 0; i < videoDevice.VideoCapabilities.Length; i++) {
 
+                string resolution = "Resolution Number " + Convert.ToString(i) + "\n";
+                string resolution_size = videoDevice.VideoCapabilities[i].FrameSize.ToString();
 
+                Console.WriteLine(resolution + resolution_size);
+                comboBoxMode.Items.Add(resolution + resolution_size);
+
+            }*/
             /*
                         videoDevice = new VideoCaptureDevice(filterInfColl[comboBoxDevice.SelectedIndex].MonikerString);
                         comboBoxMode.Items.Clear();
@@ -80,7 +95,8 @@ namespace PRO_camera_Test{
                             comboBoxMode.Items.Add("Not Supported");
                         }
                         comboBoxMode.SelectedIndex = 0;
-                        */
+               */
+
             getHueFromRGB(66, 153, 8);
         }
 
@@ -98,11 +114,13 @@ namespace PRO_camera_Test{
 
                 string resolution = "Resolution Number " + Convert.ToString(i)+"\n";
                 string resolution_size = videoDevice.VideoCapabilities[i].FrameSize.ToString();
-
-                Console.WriteLine(resolution+ resolution_size);
+                comboBoxMode.Items.Add(resolution + resolution_size);//srpen
+                //pokud bych chtel rozliseni zadavat rucne, pridam do vyberu zarizeni prazdne misto a po vzberu skutecneh kamerz, hned nactu moznosti rozliseni
+                Console.WriteLine(resolution_size);
             }
-            videoDevice.VideoResolution = videoDevice.VideoCapabilities[14];
+            videoDevice.VideoResolution = videoDevice.VideoCapabilities[2];//14
             videoSourcePlayer1.VideoSource = videoDevice;
+
             stopStartVideo = true;
             /**
             Resolution Number 0
@@ -195,6 +213,10 @@ namespace PRO_camera_Test{
             image.UnlockBits(bitmapData);
             return image;*/
         }
+
+        //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
+        //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
+        //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
         private void videoSourcePlayer1_NewFrame(object sender, ref Bitmap image) {
         //public void videoSourcePlayer1_NewFrame(object sender, NewFrameEventArgs eventArgs) {
             
@@ -233,6 +255,9 @@ namespace PRO_camera_Test{
             });
 
         }
+        //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
+        //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
+        //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
 
         private void timer1_Tick(object sender, EventArgs e) {
             label3.Text = "Value: " + f.ToString();
@@ -501,11 +526,26 @@ namespace PRO_camera_Test{
                     Console.WriteLine("ArgumentException!!!");
                     blobArea = 0;
                 }
-                
+
+
+
+
+
+                   // Graphics g = Graphics.FromImage(bitmap);
+                //PointF drawPoin2 = new PointF(bitmap, bitmap. + objectRect.Height + 4);
+                //biggestBlobInfo = "avg HUE = " + (int)blobs[0].ColorMean.GetHue();
+                biggestBlobInfo = "avg HUE = " + getAVG_Hue(bitmap)+ "; Size=" + bitmap.Width + " x " + bitmap.Height+" = "+ bitmap.Width*bitmap.Height;                
+                /*g.DrawString(imageInfo, new Font("Arial", 12), new SolidBrush(Color.Black), new System.Drawing.Point(bitmap.Width- bitmap.Width/2, bitmap.Height- bitmap.Height/2)); //imageInfo.Length
+                    g.Dispose();
+                */
+
+
 
 
                 return bitmap;
+
             } else {
+                biggestBlobInfo = "";
                     if (rects.Length > 0) {
                         foreach (Rectangle objectRect in rects) {
                         
@@ -518,7 +558,9 @@ namespace PRO_camera_Test{
                             int objectX = objectRect.X + objectRect.Width / 2 - bitmap.Width / 2;
                             int objectY = bitmap.Height / 2 - (objectRect.Y + objectRect.Height / 2);
                             PointF drawPoin2 = new PointF(objectRect.X, objectRect.Y + objectRect.Height + 4);
-                            String Blobinformation = "X= " + objectX.ToString() + "  Y= " + objectY.ToString() + "\nSize=" + objectRect.Width + ", " + objectRect.Height;
+                            //Bitmap bmpObjectRect = new Bitmap(objectRect.Width, objectRect.Height, objectRect);//pro kazdy objekt spovitat HUE!
+                           // String Blobinformation = "HUE="+getAVG_Hue() +"X= " + objectX.ToString() + "  Y= " + objectY.ToString() + "\nSize=" + objectRect.Width + "x" + objectRect.Height + "=" + objectRect.Width* objectRect.Height;
+                            String Blobinformation = "X= " + objectX.ToString() + "  Y= " + objectY.ToString() + "\nSize=" + objectRect.Width + "x" + objectRect.Height + "=" + objectRect.Width* objectRect.Height;
                             g.DrawString(Blobinformation, new Font("Arial", 12), new SolidBrush(Color.LightSkyBlue), drawPoin2);
 
                         }
@@ -577,7 +619,8 @@ namespace PRO_camera_Test{
             if (n != 1) n--;
 
             avg = sum / n;
-            richTextBox2.Text = avg + " - pruper vlastni\n"+ richTextBox2.Text ;
+            Console.WriteLine("avg HUE = "+ avg + " - pruper vlastni; ");
+            //richTextBox2.Text = avg + " - pruper vlastni\n" + richTextBox2.Text;
             //richTextBox2.Text = hueValues.Average() + " - pruper\n"+ richTextBox2.Text ;
             Console.WriteLine(avg + " - pruper vlastni");
             Console.WriteLine(hueValues.Average() + " - pruper");
@@ -589,17 +632,16 @@ namespace PRO_camera_Test{
 
         private void btnCapture_Click(object sender, EventArgs e) {
             //D   if (videoSourcePlayer1.IsRunning) {
+            if (pictureBox2.Image != null) {
 
-            Bitmap bitmap = new Bitmap(pictureBox2.Image);
-            //pictureBox1.Image = removeBackground((Bitmap)pictureBox2.Image);
-            pictureBox1.Image = pictureBox2.Image;
+                Bitmap bitmap = new Bitmap(pictureBox2.Image);
+                //pictureBox1.Image = removeBackground((Bitmap)pictureBox2.Image);
+                pictureBox1.Image = pictureBox2.Image;
 
-            richTextBox1.Text = getAVG_Hue(bitmap) + "\n" + richTextBox1.Text + "\n";
+                richTextBox1.Text = "HUE: " + getAVG_Hue(bitmap) + "\n" + richTextBox1.Text + "\n";
 
-            blobArea = 6000;
-
-
-
+                blobArea = 6000;
+            }
             //pictureBox1.Image = (Bitmap)videoSourcePlayer1.GetCurrentVideoFrame().Clone();
             //D   }
         }
@@ -609,7 +651,7 @@ namespace PRO_camera_Test{
                 //string path = System.Reflection.Assembly.GetExecutingAssembly().Location;
                 String cas = string.Format("{0:ddMMyy_HH-mm-ss}", DateTime.Now);
                 Console.WriteLine("sccccsss- " + cas);
-                pictureBox1.Image.Save(@".\TestCV" + cas + ".bmp", ImageFormat.Bmp);
+                pictureBox1.Image.Save(directoryPath + "TestCV" + cas + ".bmp", ImageFormat.Bmp);
 
             } else MessageBox.Show("Zadny obrazek k dispozici!");
             blobArea = 4444;
@@ -813,6 +855,23 @@ namespace PRO_camera_Test{
             blobMinWidth = (int)numericUpDown2BlobSizeW.Value;
         }
 
+        private void setFolderToolStripMenuItem_Click(object sender, EventArgs e) {
+            FolderBrowserDialog directchoosedlg = new FolderBrowserDialog();
+            if (directchoosedlg.ShowDialog() == DialogResult.OK) {
+                directoryPath = @directchoosedlg.SelectedPath+"\\";
+            }
+            Console.WriteLine("directoryPath: "+ directoryPath);
+        }
+
+        private void btnFolderImages_Click(object sender, EventArgs e) {
+            Process.Start(directoryPath);
+        }
+
+        private void pictureBox2_Paint(object sender, PaintEventArgs e) {
+            using (Font myFont = new Font("Arial", 9)) {
+                e.Graphics.DrawString(biggestBlobInfo, myFont, Brushes.MidnightBlue, new System.Drawing.Point(2, 2));
+            }
+        }
         private void checkBox1_CheckedChanged(object sender, EventArgs e) {
             automaticRun = checkBox1.Checked;
         }

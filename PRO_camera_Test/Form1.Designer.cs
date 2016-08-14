@@ -46,6 +46,7 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.setFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkBox1RemBack = new System.Windows.Forms.CheckBox();
             this.checkBox2Blob = new System.Windows.Forms.CheckBox();
@@ -62,6 +63,7 @@
             this.numUpDownMinBlobSize = new System.Windows.Forms.NumericUpDown();
             this.label5 = new System.Windows.Forms.Label();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this.btnFolderImages = new System.Windows.Forms.Button();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -177,6 +179,7 @@
             this.pictureBox2.TabStop = false;
             this.pictureBox2.DragDrop += new System.Windows.Forms.DragEventHandler(this.pictureBox2_DragDrop);
             this.pictureBox2.DragEnter += new System.Windows.Forms.DragEventHandler(this.pictureBox2_DragEnter);
+            this.pictureBox2.Paint += new System.Windows.Forms.PaintEventHandler(this.pictureBox2_Paint);
             // 
             // pictureBox1
             // 
@@ -222,6 +225,7 @@
             // 
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openToolStripMenuItem,
+            this.setFolderToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
@@ -230,13 +234,20 @@
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
             this.openToolStripMenuItem.Text = "Open";
+            // 
+            // setFolderToolStripMenuItem
+            // 
+            this.setFolderToolStripMenuItem.Name = "setFolderToolStripMenuItem";
+            this.setFolderToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.setFolderToolStripMenuItem.Text = "Set a folder for saving";
+            this.setFolderToolStripMenuItem.Click += new System.EventHandler(this.setFolderToolStripMenuItem_Click);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -328,7 +339,7 @@
             // 
             this.richTextBox1.Location = new System.Drawing.Point(195, 416);
             this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(75, 130);
+            this.richTextBox1.Size = new System.Drawing.Size(75, 70);
             this.richTextBox1.TabIndex = 20;
             this.richTextBox1.Text = "";
             // 
@@ -408,12 +419,23 @@
             this.checkBox1.UseVisualStyleBackColor = true;
             this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
+            // btnFolderImages
+            // 
+            this.btnFolderImages.Location = new System.Drawing.Point(18, 492);
+            this.btnFolderImages.Name = "btnFolderImages";
+            this.btnFolderImages.Size = new System.Drawing.Size(171, 23);
+            this.btnFolderImages.TabIndex = 28;
+            this.btnFolderImages.Text = "Open folder with images";
+            this.btnFolderImages.UseVisualStyleBackColor = true;
+            this.btnFolderImages.Click += new System.EventHandler(this.btnFolderImages_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.ClientSize = new System.Drawing.Size(944, 675);
+            this.Controls.Add(this.btnFolderImages);
             this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.numUpDownMinBlobSize);
@@ -497,6 +519,8 @@
         private System.Windows.Forms.NumericUpDown numUpDownMinBlobSize;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.CheckBox checkBox1;
+        private System.Windows.Forms.ToolStripMenuItem setFolderToolStripMenuItem;
+        private System.Windows.Forms.Button btnFolderImages;
     }
 }
 
