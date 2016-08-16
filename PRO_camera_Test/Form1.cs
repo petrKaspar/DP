@@ -20,10 +20,18 @@ using System.Threading;
 using NKH.MindSqualls;
 using NKH.MindSqualls.MotorControl;
 using System.Diagnostics;
+using AForge.Math.Geometry;
+using System.Drawing.Drawing2D;
 /*
 u kazdeho blobu ukazat hue a size
 rozpoznat, o jakou kosticku se jedna pomoci velikosti
 zkusit ukladat obr i s alfa kanalem
+zaporne HUE
+drak and drop - biggest ma pozadi
+spocitat pixely, ktere obrazek tvori, ne S x V!!!
+jednotlive kosticky jako objekty s dinamickou velikosti, odvyjejici se z rozliseni
+fill holes pri pocitani velikosti (cerne pozedi; prahovani, pak fill holes, spocitat, puvodni obr)
+pokud více nez 4 rohy, pak kosticka L
 */
 namespace PRO_camera_Test{
     public partial class Form1 : Form{
@@ -98,6 +106,10 @@ namespace PRO_camera_Test{
                */
 
             getHueFromRGB(66, 153, 8);
+
+            groupBox1.Enabled = false;
+            groupBox2.Enabled = false;
+            checkBoxEdgeCorners.Enabled = false;
         }
 
         private void btnStart_Click(object sender, EventArgs e) {
@@ -262,13 +274,6 @@ namespace PRO_camera_Test{
         private void timer1_Tick(object sender, EventArgs e) {
             label3.Text = "Value: " + f.ToString();
         }
-
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e) {
-            if (videoSourcePlayer1.IsRunning) {
-                videoSourcePlayer1.Stop();
-            }
-        }
-
 
         // ================== Ovladani NXT ===================
         private void motoryPasuuZvedak() {
@@ -531,24 +536,75 @@ namespace PRO_camera_Test{
 
 
 
-                   // Graphics g = Graphics.FromImage(bitmap);
+
+                // Graphics g = Graphics.FromImage(bitmap);
                 //PointF drawPoin2 = new PointF(bitmap, bitmap. + objectRect.Height + 4);
                 //biggestBlobInfo = "avg HUE = " + (int)blobs[0].ColorMean.GetHue();
-                biggestBlobInfo = "avg HUE = " + getAVG_Hue(bitmap)+ "; Size=" + bitmap.Width + " x " + bitmap.Height+" = "+ bitmap.Width*bitmap.Height;                
+                biggestBlobInfo = "avg HUE = " + getAVG_Hue(bitmap)+ "; Size=" + bitmap.Width + " x " + bitmap.Height+" = "+ bitmap.Width*bitmap.Height;
                 /*g.DrawString(imageInfo, new Font("Arial", 12), new SolidBrush(Color.Black), new System.Drawing.Point(bitmap.Width- bitmap.Width/2, bitmap.Height- bitmap.Height/2)); //imageInfo.Length
                     g.Dispose();
                 */
+                int nPixels = 0;
+                if (checkBoxComputePixels.Checked || automaticRun) {
+                    nPixels = ComputePixels(bitmap);
+                    biggestBlobInfo += "; nPixels = "+nPixels;
+                }
+                /*
+                BlobCounter blobCounter2 = new BlobCounter();
+                SimpleShapeChecker shapeChecker = new SimpleShapeChecker();
+                List<IntPoint> edgePoints = blobCounter.GetBlobsEdgePoints(blobs[0]);
+                List<IntPoint> cornerPoints;
+
+                // use the shape checker to extract the corner points
+                if (shapeChecker.IsQuadrilateral(edgePoints, out cornerPoints)) {
+                    // only do things if the corners form a rectangle
+                    if (shapeChecker.CheckPolygonSubType(cornerPoints) == PolygonSubType.Rectangle) {
+                        // here i use the graphics class to draw an overlay, but you
+                        // could also just use the cornerPoints list to calculate your
+                        // x, y, width, height values.
+                        List<System.Drawing.Point> Points = new List<System.Drawing.Point>();
+                        foreach (var point in cornerPoints) {
+                            Points.Add(new System.Drawing.Point(point.X, point.Y));
+                        }
+                        Console.WriteLine("cornerPoints.Count = " + cornerPoints.Count);
+                        float side1Length = (float)cornerPoints[0].DistanceTo(cornerPoints[1]);
+                        float side2Length = (float)cornerPoints[0].DistanceTo(cornerPoints[3]);
+                        //  float side2Length = (float)cornerPoints[0].DistanceTo(cornerPoints[3]);
+                        // float side2Length = (float)cornerPoints[0].DistanceTo(cornerPoints[3]);
+
+                        Console.WriteLine(side1Length + " side1Length");
+                        Console.WriteLine(side2Length + " side2Length");
+                        Graphics g3 = Graphics.FromImage(bitmap);
+                        g3.DrawPolygon(new Pen(Color.Red, 5.0f), Points.ToArray());
+                        foreach (IntPoint corner in cornerPoints) {
+                            g3.DrawRectangle(new Pen(Color.Blue, 5.0f), corner.X - 3, corner.Y - 3, 4, 4);
+                        }
 
 
-
-
+                    }
+                }*/
+                if (checkBoxEdgeCorners.Checked || automaticRun) {
+                    bitmap = DetectEdgesCorners(bitmap);
+                }   
+                /*
+                                nPixels = 0;
+                                for (int y = 0; y < bitmap.Height; y++) {
+                                    for (int x = 0; x < bitmap.Width; x++) {
+                                        Console.WriteLine(bitmap.GetPixel(x, y).R+" "+bitmap.GetPixel(x, y).G+" "+ bitmap.GetPixel(x, y).B+" "+ bitmap.GetPixel(x, y).A);
+                                        if (bitmap.GetPixel(x, y) == Color.Black) nPixels++;
+                                    }
+                                }
+                                Console.WriteLine("nPixels222 = " + nPixels);
+                                */
+                //return DetectBigBlobs(bitmap);
+                //return DetectCorners(bitmap); 
                 return bitmap;
 
             } else {
                 biggestBlobInfo = "";
                     if (rects.Length > 0) {
-                        foreach (Rectangle objectRect in rects) {
-                        
+                    foreach (Rectangle objectRect in rects) {
+                        Bitmap bitmap222 = bitmap;
                         Graphics g = Graphics.FromImage(bitmap);
 
                         using (Pen pen = new Pen(Color.FromArgb(160, 255, 160), 3)) {
@@ -558,9 +614,27 @@ namespace PRO_camera_Test{
                             int objectX = objectRect.X + objectRect.Width / 2 - bitmap.Width / 2;
                             int objectY = bitmap.Height / 2 - (objectRect.Y + objectRect.Height / 2);
                             PointF drawPoin2 = new PointF(objectRect.X, objectRect.Y + objectRect.Height + 4);
-                            //Bitmap bmpObjectRect = new Bitmap(objectRect.Width, objectRect.Height, objectRect);//pro kazdy objekt spovitat HUE!
-                           // String Blobinformation = "HUE="+getAVG_Hue() +"X= " + objectX.ToString() + "  Y= " + objectY.ToString() + "\nSize=" + objectRect.Width + "x" + objectRect.Height + "=" + objectRect.Width* objectRect.Height;
-                            String Blobinformation = "X= " + objectX.ToString() + "  Y= " + objectY.ToString() + "\nSize=" + objectRect.Width + "x" + objectRect.Height + "=" + objectRect.Width* objectRect.Height;
+
+  
+                             Bitmap target = new Bitmap(objectRect.Width, objectRect.Height);
+                             using (Graphics gr = Graphics.FromImage(target)) {
+                                 gr.DrawImage(bitmap222, new Rectangle(0, 0, target.Width, target.Height),
+                                                  objectRect, GraphicsUnit.Pixel);
+                             }
+/*
+                            Bitmap target=null;
+                            ExtractBiggestBlob filter = new ExtractBiggestBlob();
+                            // apply the filter
+                            try {
+                                target = filter.Apply(bitmap);
+                            } catch (ArgumentException) {
+                                Console.WriteLine("ArgumentException!!!");
+                                blobArea = 0;
+                            }
+                            */
+                            // Bitmap bmpObjectRect = new Bitmap(objectRect.Width, objectRect.Height, objectRect.);//pro kazdy objekt spovitat HUE!
+                            // String Blobinformation = "HUE="+getAVG_Hue() +"X= " + objectX.ToString() + "  Y= " + objectY.ToString() + "\nSize=" + objectRect.Width + "x" + objectRect.Height + "=" + objectRect.Width* objectRect.Height;
+                            String Blobinformation = "HUE = "+getAVG_Hue(target) +" "+target.Width + "x" + target.Height + "=" + target.Width * target.Height+"\nSize=" + objectRect.Width + "x" + objectRect.Height + "=" + objectRect.Width* objectRect.Height;
                             g.DrawString(Blobinformation, new Font("Arial", 12), new SolidBrush(Color.LightSkyBlue), drawPoin2);
 
                         }
@@ -573,6 +647,150 @@ namespace PRO_camera_Test{
             
         }
 
+        // spočítá, kolik se v bitmapě vyskytuje nečerných pixelů (tedy pixelů objektu, pokud pozadí bude černé)
+        private int ComputePixels(Bitmap bitmap) {
+            var filterCountPix = new FiltersSequence(Grayscale.CommonAlgorithms.BT709,
+                                 new Threshold(2), new FillHoles());
+            // var newBitmap = filter.Apply(bitmap);
+            Bitmap bitmapCountPix = filterCountPix.Apply(bitmap);
+
+            int nPixels = 0;
+            Console.WriteLine(bitmapCountPix.Height + " x " + bitmapCountPix.Width);
+            for (int xx = 0; xx < bitmapCountPix.Width; xx++) {
+                for (int yy = 0; yy < bitmapCountPix.Height; yy++) {
+                    // Console.WriteLine(column+" "+row);
+                    if (!bitmapCountPix.GetPixel(xx, yy).ToArgb().Equals(Color.Black.ToArgb())) nPixels++;
+                }
+            }
+            Console.WriteLine("nPixels = " + nPixels);
+            return nPixels;
+        }
+
+        // Vrátí batmapu, kde bude vyznačená hranice objektu spolu s rohy, pokud se bude jednat o obdelník
+        private Bitmap DetectEdgesCorners(Bitmap bitmap) {
+            // locating objects
+            BlobCounter blobCounter2 = new BlobCounter();
+
+            blobCounter2.FilterBlobs = true;
+            blobCounter2.MinHeight = 5;
+            blobCounter2.MinWidth = 5;
+
+            blobCounter2.ProcessImage(bitmap);
+            Blob[] blobs2 = blobCounter2.GetObjectsInformation();
+            // check for rectangles
+            SimpleShapeChecker shapeChecker = new SimpleShapeChecker();
+
+            SolidBrush brush = new SolidBrush(Color.Blue);
+            Pen pen = new Pen(brush);
+
+            foreach (var blob in blobs2) {
+                List<IntPoint> edgePoints = blobCounter2.GetBlobsEdgePoints(blob);
+                List<IntPoint> cornerPoints;
+
+                // use the shape checker to extract the corner points
+                if (shapeChecker.IsQuadrilateral(edgePoints, out cornerPoints)) {
+                    // only do things if the corners form a rectangle
+                    if (shapeChecker.CheckPolygonSubType(cornerPoints) == PolygonSubType.Rectangle) {
+                        // here i use the graphics class to draw an overlay, but you
+                        // could also just use the cornerPoints list to calculate your
+                        // x, y, width, height values.
+                        List<System.Drawing.Point> Points = new List<System.Drawing.Point>();
+                        foreach (var point in cornerPoints) {
+                            Points.Add(new System.Drawing.Point(point.X, point.Y));
+                        }
+                        Console.WriteLine("cornerPoints.Count = " + cornerPoints.Count);
+                        float side1Length = (float)cornerPoints[0].DistanceTo(cornerPoints[1]);
+                        float side2Length = (float)cornerPoints[0].DistanceTo(cornerPoints[3]);
+                        //  float side2Length = (float)cornerPoints[0].DistanceTo(cornerPoints[3]);
+                        // float side2Length = (float)cornerPoints[0].DistanceTo(cornerPoints[3]);
+
+                        Console.WriteLine(side1Length + " side1Length");
+                        Console.WriteLine(side2Length + " side2Length");
+                        Graphics g3 = Graphics.FromImage(bitmap);
+                        g3.DrawPolygon(new Pen(Color.Red, 5.0f), Points.ToArray());
+                        int t = 0;
+                        foreach (IntPoint corner in cornerPoints) {
+                            g3.DrawRectangle(new Pen(Color.Blue, 5.0f), corner.X - 1, corner.Y - 1, 4, 4);
+                            g3.DrawString("c"+t, new Font("Arial", 12), new SolidBrush(Color.LightSkyBlue), corner.X - 3, corner.Y - 3);
+                            t++;
+                        }
+
+
+                    }
+                }
+            }
+            return bitmap;
+        }
+
+        public Bitmap DetectBigBlobs(Bitmap bitmapDetectBigBlobs) {
+            BlobCounter blobCounter = new BlobCounter();
+            Graphics g = Graphics.FromImage(bitmapDetectBigBlobs);
+
+            //filtering the blobs before searching for blobs 
+            blobCounter.FilterBlobs = true;
+            blobCounter.MinHeight = bitmapDetectBigBlobs.Height / 3;
+            blobCounter.MinWidth = bitmapDetectBigBlobs.Width / 3;
+
+            blobCounter.ProcessImage(bitmapDetectBigBlobs);
+            Blob[] blobs = blobCounter.GetObjectsInformation();
+
+            foreach (Blob b in blobs) {
+                //getting the found blob edgepoints 
+                List<IntPoint> edgePoints = blobCounter.GetBlobsEdgePoints(b);
+                //if you want to mark every edge point RED 
+                foreach (IntPoint point in edgePoints)
+                    bitmapDetectBigBlobs.SetPixel(point.X, point.Y, Color.Red);
+                //if you want to draw a rectangle around the blob 
+                g.DrawRectangle(Pens.Blue, b.Rectangle);
+
+            }
+
+            g.Dispose();
+            return bitmapDetectBigBlobs;
+        }
+
+        private Bitmap DetectCorners(Bitmap bitmapWithRectangle) {
+
+            Graphics graphics = Graphics.FromImage(bitmapWithRectangle);
+            SolidBrush brush = new SolidBrush(Color.Red);
+            Pen pen = new Pen(brush);
+
+            // Create corner detector and have it process the image
+            MoravecCornersDetector mcd = new MoravecCornersDetector();
+            List<IntPoint> corners = mcd.ProcessImage(bitmapWithRectangle);
+
+            // Visualization: Draw 3x3 boxes around the corners
+            foreach (IntPoint corner in corners) {
+                graphics.DrawRectangle(pen, corner.X - 1, corner.Y - 1, 3, 3);
+            }
+
+            return bitmapWithRectangle;
+        }
+
+        private Bitmap DrawBitmapWithBorder(Bitmap bmp) {
+            using (Graphics g = Graphics.FromImage(bmp)) {
+                //g.DrawRectangle(new Pen(Brushes.Black, 20), new Rectangle(0, 0, bmp.Width, bmp.Height));
+               /// g.DrawImage(bmp, new Rectangle(20, 20, bmp.Width+40, bmp.Height+40));
+               /* Pen pen = new Pen(Color.Green, 20);
+                pen.Alignment = PenAlignment.Inset; //<-- this
+                g.DrawRectangle(pen, new Rectangle(20, 20, bmp.Width + 40, bmp.Height + 40));*/
+                DrawRectangle(g, new Rectangle(0, 0, bmp.Width + 40, bmp.Height + 40), 10);
+            }
+            
+            return bmp;
+        }
+
+        private void DrawRectangle(Graphics g, Rectangle rect, float penWidth) {
+            using (Pen pen = new Pen(SystemColors.ControlDark, penWidth)) {
+                float shrinkAmount = pen.Width / 2;
+                g.DrawRectangle(
+                    pen,
+                    rect.X + shrinkAmount,   // move half a pen-width to the right
+                    rect.Y + shrinkAmount,   // move half a pen-width to the down
+                    rect.Width - penWidth,   // shrink width with one pen-width
+                    rect.Height - penWidth); // shrink height with one pen-width
+            }
+        }
 
         private int getAVG_Hue(Bitmap bitmap) {
             int width = bitmap.Width;
@@ -749,7 +967,8 @@ namespace PRO_camera_Test{
                 //pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
                 pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
                 pictureBox2.Image = bitmap2;
-                
+                pictureBox2.Refresh();
+
                 //----------------------
                 /*
                 Bitmap bitmap2, bitmapGRAY;
@@ -876,11 +1095,53 @@ namespace PRO_camera_Test{
             automaticRun = checkBox1.Checked;
         }
 
+        private void checkBox1RemBack_CheckedChanged(object sender, EventArgs e) {
+            if (checkBox1RemBack.Checked) {
+                groupBox1.Enabled = true;
+            } else if (!checkBox1RemBack.Checked) {
+                groupBox1.Enabled = false;
+                groupBox2.Enabled = false;
+                checkBoxEdgeCorners.Enabled = false;
+                checkBox2Blob.Checked = false;
+                checkBox3Biggest.Checked = false;
+                checkBoxEdgeCorners.Checked = false;
+            }
+        }
+
+        private void checkBox2Blob_CheckedChanged(object sender, EventArgs e) {
+            if (checkBox2Blob.Checked) {
+                groupBox2.Enabled = true;
+            } else if (!checkBox2Blob.Checked) {
+                groupBox2.Enabled = false;
+                checkBoxEdgeCorners.Enabled = false;
+                checkBox3Biggest.Checked = false;
+                checkBoxEdgeCorners.Checked = false;
+            }
+        }
+
+        private void checkBox3Biggest_CheckedChanged(object sender, EventArgs e) {
+            if (checkBox3Biggest.Checked) {
+                checkBoxEdgeCorners.Enabled = true;
+            } else if (!checkBox3Biggest.Checked) {
+                checkBoxEdgeCorners.Enabled = false;
+                checkBoxComputePixels.Enabled = false;
+                checkBoxEdgeCorners.Checked = false;
+            }
+        }
+
         private void numericUpDown3BlobSizeH_ValueChanged(object sender, EventArgs e) {
             blobMinHeight = (int)numericUpDown3BlobSizeH.Value;
         }
         private void numUpDownMinBlobSize_ValueChanged(object sender, EventArgs e) {
             minBlobArea = (int)numUpDownMinBlobSize.Value;
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e) {
+            if (videoSourcePlayer1.IsRunning) {
+                videoSourcePlayer1.Stop();
+            }
+            Application.ExitThread();
+            Environment.Exit(1);
         }
     }
 }

@@ -48,7 +48,6 @@
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.checkBox1RemBack = new System.Windows.Forms.CheckBox();
             this.checkBox2Blob = new System.Windows.Forms.CheckBox();
             this.numericUpDown1Bakground = new System.Windows.Forms.NumericUpDown();
             this.numericUpDown2BlobSizeW = new System.Windows.Forms.NumericUpDown();
@@ -64,6 +63,12 @@
             this.label5 = new System.Windows.Forms.Label();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.btnFolderImages = new System.Windows.Forms.Button();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.checkBox1RemBack = new System.Windows.Forms.CheckBox();
+            this.groupBox0 = new System.Windows.Forms.GroupBox();
+            this.checkBoxEdgeCorners = new System.Windows.Forms.CheckBox();
+            this.checkBoxComputePixels = new System.Windows.Forms.CheckBox();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -73,6 +78,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown3BlobSizeH)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numUpDownMinBlobSize)).BeginInit();
+            this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
+            this.groupBox0.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
@@ -251,29 +259,20 @@
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
-            // checkBox1RemBack
-            // 
-            this.checkBox1RemBack.AutoSize = true;
-            this.checkBox1RemBack.Location = new System.Drawing.Point(644, 156);
-            this.checkBox1RemBack.Name = "checkBox1RemBack";
-            this.checkBox1RemBack.Size = new System.Drawing.Size(129, 17);
-            this.checkBox1RemBack.TabIndex = 12;
-            this.checkBox1RemBack.Text = "Remove background ";
-            this.checkBox1RemBack.UseVisualStyleBackColor = true;
-            // 
             // checkBox2Blob
             // 
             this.checkBox2Blob.AutoSize = true;
-            this.checkBox2Blob.Location = new System.Drawing.Point(644, 208);
+            this.checkBox2Blob.Location = new System.Drawing.Point(6, 19);
             this.checkBox2Blob.Name = "checkBox2Blob";
             this.checkBox2Blob.Size = new System.Drawing.Size(109, 17);
             this.checkBox2Blob.TabIndex = 13;
             this.checkBox2Blob.Text = "Objects detection";
             this.checkBox2Blob.UseVisualStyleBackColor = true;
+            this.checkBox2Blob.CheckedChanged += new System.EventHandler(this.checkBox2Blob_CheckedChanged);
             // 
             // numericUpDown1Bakground
             // 
-            this.numericUpDown1Bakground.Location = new System.Drawing.Point(730, 179);
+            this.numericUpDown1Bakground.Location = new System.Drawing.Point(43, 42);
             this.numericUpDown1Bakground.Maximum = new decimal(new int[] {
             255,
             0,
@@ -291,7 +290,7 @@
             // 
             // numericUpDown2BlobSizeW
             // 
-            this.numericUpDown2BlobSizeW.Location = new System.Drawing.Point(681, 231);
+            this.numericUpDown2BlobSizeW.Location = new System.Drawing.Point(43, 42);
             this.numericUpDown2BlobSizeW.Maximum = new decimal(new int[] {
             255,
             0,
@@ -304,7 +303,7 @@
             // 
             // numericUpDown3BlobSizeH
             // 
-            this.numericUpDown3BlobSizeH.Location = new System.Drawing.Point(730, 231);
+            this.numericUpDown3BlobSizeH.Location = new System.Drawing.Point(92, 42);
             this.numericUpDown3BlobSizeH.Maximum = new decimal(new int[] {
             255,
             0,
@@ -318,12 +317,13 @@
             // checkBox3Biggest
             // 
             this.checkBox3Biggest.AutoSize = true;
-            this.checkBox3Biggest.Location = new System.Drawing.Point(679, 264);
+            this.checkBox3Biggest.Location = new System.Drawing.Point(6, 19);
             this.checkBox3Biggest.Name = "checkBox3Biggest";
             this.checkBox3Biggest.Size = new System.Drawing.Size(105, 17);
             this.checkBox3Biggest.TabIndex = 17;
             this.checkBox3Biggest.Text = "Only the biggest ";
             this.checkBox3Biggest.UseVisualStyleBackColor = true;
+            this.checkBox3Biggest.CheckedChanged += new System.EventHandler(this.checkBox3Biggest_CheckedChanged);
             // 
             // btnCropImg
             // 
@@ -356,9 +356,9 @@
             // 
             // richTextBox2
             // 
-            this.richTextBox2.Location = new System.Drawing.Point(648, 362);
+            this.richTextBox2.Location = new System.Drawing.Point(648, 445);
             this.richTextBox2.Name = "richTextBox2";
-            this.richTextBox2.Size = new System.Drawing.Size(296, 301);
+            this.richTextBox2.Size = new System.Drawing.Size(224, 301);
             this.richTextBox2.TabIndex = 22;
             this.richTextBox2.Text = "";
             // 
@@ -383,7 +383,7 @@
             // 
             // numUpDownMinBlobSize
             // 
-            this.numUpDownMinBlobSize.Location = new System.Drawing.Point(677, 305);
+            this.numUpDownMinBlobSize.Location = new System.Drawing.Point(43, 68);
             this.numUpDownMinBlobSize.Maximum = new decimal(new int[] {
             300000,
             0,
@@ -402,7 +402,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(745, 312);
+            this.label5.Location = new System.Drawing.Point(111, 75);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(71, 13);
             this.label5.TabIndex = 26;
@@ -429,28 +429,91 @@
             this.btnFolderImages.UseVisualStyleBackColor = true;
             this.btnFolderImages.Click += new System.EventHandler(this.btnFolderImages_Click);
             // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.numericUpDown3BlobSizeH);
+            this.groupBox1.Controls.Add(this.numericUpDown2BlobSizeW);
+            this.groupBox1.Controls.Add(this.checkBox2Blob);
+            this.groupBox1.Location = new System.Drawing.Point(645, 200);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(302, 70);
+            this.groupBox1.TabIndex = 29;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "groupBox1";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.checkBoxComputePixels);
+            this.groupBox2.Controls.Add(this.label5);
+            this.groupBox2.Controls.Add(this.numUpDownMinBlobSize);
+            this.groupBox2.Controls.Add(this.checkBox3Biggest);
+            this.groupBox2.Location = new System.Drawing.Point(645, 276);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(296, 94);
+            this.groupBox2.TabIndex = 30;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "groupBox2";
+            // 
+            // checkBox1RemBack
+            // 
+            this.checkBox1RemBack.AutoSize = true;
+            this.checkBox1RemBack.Location = new System.Drawing.Point(6, 19);
+            this.checkBox1RemBack.Name = "checkBox1RemBack";
+            this.checkBox1RemBack.Size = new System.Drawing.Size(129, 17);
+            this.checkBox1RemBack.TabIndex = 12;
+            this.checkBox1RemBack.Text = "Remove background ";
+            this.checkBox1RemBack.UseVisualStyleBackColor = true;
+            this.checkBox1RemBack.CheckedChanged += new System.EventHandler(this.checkBox1RemBack_CheckedChanged);
+            // 
+            // groupBox0
+            // 
+            this.groupBox0.Controls.Add(this.checkBox1RemBack);
+            this.groupBox0.Controls.Add(this.numericUpDown1Bakground);
+            this.groupBox0.Location = new System.Drawing.Point(645, 121);
+            this.groupBox0.Name = "groupBox0";
+            this.groupBox0.Size = new System.Drawing.Size(296, 73);
+            this.groupBox0.TabIndex = 31;
+            this.groupBox0.TabStop = false;
+            this.groupBox0.Text = "groupBox0";
+            // 
+            // checkBoxEdgeCorners
+            // 
+            this.checkBoxEdgeCorners.AutoSize = true;
+            this.checkBoxEdgeCorners.Location = new System.Drawing.Point(645, 376);
+            this.checkBoxEdgeCorners.Name = "checkBoxEdgeCorners";
+            this.checkBoxEdgeCorners.Size = new System.Drawing.Size(144, 17);
+            this.checkBoxEdgeCorners.TabIndex = 32;
+            this.checkBoxEdgeCorners.Text = "Detect edge and corners";
+            this.checkBoxEdgeCorners.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxComputePixels
+            // 
+            this.checkBoxComputePixels.AutoSize = true;
+            this.checkBoxComputePixels.Location = new System.Drawing.Point(43, 43);
+            this.checkBoxComputePixels.Name = "checkBoxComputePixels";
+            this.checkBoxComputePixels.Size = new System.Drawing.Size(115, 17);
+            this.checkBoxComputePixels.TabIndex = 27;
+            this.checkBoxComputePixels.Text = "Compute the pixels";
+            this.checkBoxComputePixels.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.ClientSize = new System.Drawing.Size(944, 675);
+            this.Controls.Add(this.checkBoxEdgeCorners);
+            this.Controls.Add(this.groupBox0);
+            this.Controls.Add(this.groupBox2);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btnFolderImages);
             this.Controls.Add(this.checkBox1);
-            this.Controls.Add(this.label5);
-            this.Controls.Add(this.numUpDownMinBlobSize);
             this.Controls.Add(this.btnPropPage);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.richTextBox2);
             this.Controls.Add(this.pictureBox3);
             this.Controls.Add(this.richTextBox1);
             this.Controls.Add(this.btnCropImg);
-            this.Controls.Add(this.checkBox3Biggest);
-            this.Controls.Add(this.numericUpDown3BlobSizeH);
-            this.Controls.Add(this.numericUpDown2BlobSizeW);
-            this.Controls.Add(this.numericUpDown1Bakground);
-            this.Controls.Add(this.checkBox2Blob);
-            this.Controls.Add(this.checkBox1RemBack);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.btnCapture);
@@ -479,6 +542,12 @@
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown3BlobSizeH)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numUpDownMinBlobSize)).EndInit();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
+            this.groupBox0.ResumeLayout(false);
+            this.groupBox0.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -504,7 +573,6 @@
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private AForge.Controls.PictureBox pictureBox2;
-        private System.Windows.Forms.CheckBox checkBox1RemBack;
         private System.Windows.Forms.CheckBox checkBox2Blob;
         private System.Windows.Forms.NumericUpDown numericUpDown1Bakground;
         private System.Windows.Forms.NumericUpDown numericUpDown2BlobSizeW;
@@ -521,6 +589,12 @@
         private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.ToolStripMenuItem setFolderToolStripMenuItem;
         private System.Windows.Forms.Button btnFolderImages;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.CheckBox checkBox1RemBack;
+        private System.Windows.Forms.GroupBox groupBox0;
+        private System.Windows.Forms.CheckBox checkBoxEdgeCorners;
+        private System.Windows.Forms.CheckBox checkBoxComputePixels;
     }
 }
 
