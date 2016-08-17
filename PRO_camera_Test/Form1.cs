@@ -56,7 +56,7 @@ namespace PRO_camera_Test{
         public int qqq;
         static int blobArea = 0;
         static int minBlobArea;
-        private static bool rotateDone = false, stopStartVideo=true;
+        private static bool rotateDone = false, stopStartVideo=true, newObjectDetect=false;
         Thread thread1;
         private string directoryPath = @".\";//ukladaji se sem sejmute obrazky
         private string biggestBlobInfo = "";//vykresli se do pictureBoxu2 info o objektu (hue a size)
@@ -230,8 +230,7 @@ namespace PRO_camera_Test{
         //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
         //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
         private void videoSourcePlayer1_NewFrame(object sender, ref Bitmap image) {
-        //public void videoSourcePlayer1_NewFrame(object sender, NewFrameEventArgs eventArgs) {
-            
+            //public void videoSourcePlayer1_NewFrame(object sender, NewFrameEventArgs eventArgs) {
             Bitmap bitmap2 = new Bitmap(image);
 
             // create filter
@@ -467,12 +466,22 @@ namespace PRO_camera_Test{
                    Rectangle[] rects = blobCounter.GetObjectsRectangles();
             // process blobs
             Blob[] blobs = blobCounter.GetObjectsInformation();
-        //    foreach (Rectangle recs in rects)
-                if (checkBox3Biggest.Checked || automaticRun) {
+            //    foreach (Rectangle recs in rects)
+            Console.WriteLine("array blobs.Length = "+ blobs.Length);
+                if ((checkBox3Biggest.Checked || automaticRun) && blobs.Length > 0) {
+
+                /*if (!newObjectDetect) { 
+                        videoSourcePlayer1.Invoke((MethodInvoker)(() => videoSourcePlayer1.Stop()));
+                        videoDevice.VideoResolution = videoDevice.VideoCapabilities[6];//14
+                        videoSourcePlayer1.Invoke((MethodInvoker)(() => videoSourcePlayer1.VideoSource = videoDevice));
+                        videoSourcePlayer1.Invoke((MethodInvoker)(() => videoSourcePlayer1.Start()));
+                        newObjectDetect = true;
+                    }
+                    */
                 // extract the biggest blob
                 //pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
                 //pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
-                
+
                 if (blobs.Length > 0) {
                     blobCounter.ExtractBlobsImage(bitmap, blobs[0], true);
 
@@ -532,11 +541,6 @@ namespace PRO_camera_Test{
                     blobArea = 0;
                 }
 
-
-
-
-
-
                 // Graphics g = Graphics.FromImage(bitmap);
                 //PointF drawPoin2 = new PointF(bitmap, bitmap. + objectRect.Height + 4);
                 //biggestBlobInfo = "avg HUE = " + (int)blobs[0].ColorMean.GetHue();
@@ -584,6 +588,7 @@ namespace PRO_camera_Test{
                     }
                 }*/
                 if (checkBoxEdgeCorners.Checked || automaticRun) {
+                    biggestBlobInfo = "avg HUE = " + getAVG_Hue(bitmap);
                     bitmap = DetectEdgesCorners(bitmap);
                 }   
                 /*
@@ -682,7 +687,7 @@ namespace PRO_camera_Test{
 
             SolidBrush brush = new SolidBrush(Color.Blue);
             Pen pen = new Pen(brush);
-
+            float side1Length=0, side2Length=0;
             foreach (var blob in blobs2) {
                 List<IntPoint> edgePoints = blobCounter2.GetBlobsEdgePoints(blob);
                 List<IntPoint> cornerPoints;
@@ -699,13 +704,14 @@ namespace PRO_camera_Test{
                             Points.Add(new System.Drawing.Point(point.X, point.Y));
                         }
                         Console.WriteLine("cornerPoints.Count = " + cornerPoints.Count);
-                        float side1Length = (float)cornerPoints[0].DistanceTo(cornerPoints[1]);
-                        float side2Length = (float)cornerPoints[0].DistanceTo(cornerPoints[3]);
+                         side1Length = (float)cornerPoints[0].DistanceTo(cornerPoints[1]);
+                         side2Length = (float)cornerPoints[0].DistanceTo(cornerPoints[3]);
                         //  float side2Length = (float)cornerPoints[0].DistanceTo(cornerPoints[3]);
                         // float side2Length = (float)cornerPoints[0].DistanceTo(cornerPoints[3]);
-
+                        biggestBlobInfo += " side1=" + side1Length + " side2=" + side2Length;
                         Console.WriteLine(side1Length + " side1Length");
                         Console.WriteLine(side2Length + " side2Length");
+
                         Graphics g3 = Graphics.FromImage(bitmap);
                         g3.DrawPolygon(new Pen(Color.Red, 5.0f), Points.ToArray());
                         int t = 0;
@@ -719,6 +725,7 @@ namespace PRO_camera_Test{
                     }
                 }
             }
+            
             return bitmap;
         }
 
