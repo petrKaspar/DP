@@ -22,6 +22,7 @@ using NKH.MindSqualls.MotorControl;
 using System.Diagnostics;
 using AForge.Math.Geometry;
 using System.Drawing.Drawing2D;
+using AForge.Robotics.Lego;
 /*
 u kazdeho blobu ukazat hue a size
 rozpoznat, o jakou kosticku se jedna pomoci velikosti
@@ -32,6 +33,8 @@ spocitat pixely, ktere obrazek tvori, ne S x V!!!
 jednotlive kosticky jako objekty s dinamickou velikosti, odvyjejici se z rozliseni
 fill holes pri pocitani velikosti (cerne pozedi; prahovani, pak fill holes, spocitat, puvodni obr)
 pokud více nez 4 rohy, pak kosticka L
+ocrana proti zaseknuti na prvnim pasu a kolama - jednou za cas kola roztocit na druhou stranu; 
+kola jsou pripojeny na brickbezDisp pres Bluetooth
 */
 namespace PRO_camera_Test{
     public partial class Form1 : Form{
@@ -44,9 +47,15 @@ namespace PRO_camera_Test{
             //D
         }
         //-------konfigurace NXT blokuu -------
-        public static NxtBrick brick = new NxtBrick(NxtCommLinkType.USB, 3);
+        //brick ma display a je pres USB
+        //brick.MotorA = rampa do krabicek 
+        //brick.MotorB =  pas 2 (ten nizsi, jednoduchy)
+        //brick.MotorC =  pas 1 (nahore)
 
-        //-------konfigurace NXT blokuu -------
+        public static NxtBrick brick = new NxtBrick(NxtCommLinkType.USB, 3);
+        public static NXTBrick brickBezDisp = new NXTBrick();
+
+        //-------/konfigurace NXT blokuu -------
         FilterInfoCollection filterInfColl;
         public VideoCaptureDevice videoDevice;
         MotionDetector motionDetector;
@@ -56,6 +65,7 @@ namespace PRO_camera_Test{
         public int qqq;
         static int blobArea = 0;
         static int minBlobArea;
+        private static int currentBox, requiredBox;
         private static bool rotateDone = false, stopStartVideo=true, newObjectDetect=false;
         Thread thread1;
         private string directoryPath = @".\";//ukladaji se sem sejmute obrazky
@@ -110,6 +120,30 @@ namespace PRO_camera_Test{
             groupBox1.Enabled = false;
             groupBox2.Enabled = false;
             checkBoxEdgeCorners.Enabled = false;
+
+            if (brickBezDisp.Connect("COM7")) {
+                System.Diagnostics.Debug.WriteLine("Connected successfully");
+
+                /*  
+                // enable controls
+                  resetMotorButton.Enabled = true;
+                  setMotorStateButton.Enabled = true;
+                  getMotorStateButton.Enabled = true;
+                  getInputButton.Enabled = true;
+                  setInputModeButton.Enabled = true;
+                  */
+                // get device information
+                string deviceName;
+                byte[] btAddress;
+                int btSignalStrength;
+                int freeUserFlesh;
+
+                brickBezDisp.GetDeviceInformation(out deviceName, out btAddress, out btSignalStrength, out freeUserFlesh);
+                Console.WriteLine("deviceName: "+deviceName + ", btAddress " + btAddress+ ", btSignalStrength " + btSignalStrength+ ", freeUserFlesh " + freeUserFlesh);
+                int batteryLevel;
+                brickBezDisp.GetBatteryPower(out batteryLevel);
+                Console.WriteLine("batteryLevel: " + batteryLevel);
+            }
         }
 
         private void btnStart_Click(object sender, EventArgs e) {
@@ -291,33 +325,60 @@ namespace PRO_camera_Test{
                            brick.Disconnect();
 
                    */
-                   /*
-                   //,,,,,,,,,,,,,,,,,,,,,,,,,,
-            Thread.Sleep(7000);
-            this.Invoke((MethodInvoker)delegate {
-                Bitmap bbb;
-                if (videoSourcePlayer1.IsRunning) {
-                    videoSourcePlayer1.Stop();
-                    stop = true;
-                }
-                Thread.Sleep(500);
-                videoDevice.VideoResolution = videoDevice.VideoCapabilities[6];//14 { Width = 1280, Height = 720}
-                videoSourcePlayer1.VideoSource = videoDevice;
-                videoSourcePlayer1.Start();
-                Thread.Sleep(6000);
-                bbb = (Bitmap)videoSourcePlayer1.GetCurrentVideoFrame().Clone();
-                Bitmap current = bbb;
-                string filepath = Environment.CurrentDirectory;
-                string fileName = System.IO.Path.Combine(filepath, @"name.bmp");
-                bbb.Save(fileName);
-                bbb.Dispose();
-            });
+            /*
             //,,,,,,,,,,,,,,,,,,,,,,,,,,
-            */
-            brick.MotorA = new NxtMotor();//**************zvedak /
+     Thread.Sleep(7000);
+     this.Invoke((MethodInvoker)delegate {
+         Bitmap bbb;
+         if (videoSourcePlayer1.IsRunning) {
+             videoSourcePlayer1.Stop();
+             stop = true;
+         }
+         Thread.Sleep(500);
+         videoDevice.VideoResolution = videoDevice.VideoCapabilities[6];//14 { Width = 1280, Height = 720}
+         videoSourcePlayer1.VideoSource = videoDevice;
+         videoSourcePlayer1.Start();
+         Thread.Sleep(6000);
+         bbb = (Bitmap)videoSourcePlayer1.GetCurrentVideoFrame().Clone();
+         Bitmap current = bbb;
+         string filepath = Environment.CurrentDirectory;
+         string fileName = System.IO.Path.Combine(filepath, @"name.bmp");
+         bbb.Save(fileName);
+         bbb.Dispose();
+     });
+     //,,,,,,,,,,,,,,,,,,,,,,,,,,
+     */
+
+            // run motor A
+            NXTBrick.MotorState motorWheels = new NXTBrick.MotorState();
+            NXTBrick.MotorState motorElevator = new NXTBrick.MotorState();
+            NXTBrick.MotorState motorWheelsStop = new NXTBrick.MotorState();
+            NXTBrick.MotorState motorElevatorStop = new NXTBrick.MotorState();
+            NXTBrick.MotorState motorBoxes = new NXTBrick.MotorState();
+
+            motorWheels.Power = 62;
+            motorWheels.TurnRatio = 10;
+            motorWheels.Mode = NXTBrick.MotorMode.On;
+            motorWheels.Regulation = NXTBrick.MotorRegulationMode.Idle;
+            motorWheels.RunState = NXTBrick.MotorRunState.Running;
+            motorWheels.TachoLimit = 0;
+
+            motorElevator.Power = 30;
+            motorElevator.TurnRatio = 10;
+            motorElevator.Mode = NXTBrick.MotorMode.On;
+            motorElevator.Regulation = NXTBrick.MotorRegulationMode.Idle;
+            motorElevator.RunState = NXTBrick.MotorRunState.Running;
+            motorElevator.TachoLimit = 0;
+
+            motorWheelsStop.Mode = NXTBrick.MotorMode.Brake;
+            motorElevatorStop.Mode = NXTBrick.MotorMode.Brake;
+
+            brick.MotorA = new NxtMotor(); // rampa do krabicek
             brick.MotorB = new NxtMotor(); // pas 2 (ten nizsi, jednoduchy)
             brick.MotorC = new NxtMotor(); // pas 1 (nahore)
 
+           // brickBezDisp.SetMotorState(NXTBrick.Motor.B, motorWheels); // kola na prvnim pasu nahore
+           // brickBezDisp.SetMotorState(NXTBrick.Motor.C, motorElevator); // vytah ze zasobniku na pas
             // Poll it every 50 milliseconds.
             brick.MotorA.PollInterval = 10;
             brick.MotorB.PollInterval = 50;
@@ -344,7 +405,7 @@ namespace PRO_camera_Test{
             //while (true) { 
             // if (brick2.IsConnected) {
             //brick.MotorA.Run(-15, 0);
-            brick.MotorB.Run(-15, 0);
+            brick.MotorB.Run(-35, 0);//-15
             brick.MotorC.Run(-20, 0);
             Console.WriteLine("run1 blobArea: " + Form1.blobArea);
             int milliseconds = 200;
@@ -357,12 +418,14 @@ namespace PRO_camera_Test{
                 //brick.MotorA.Run(-30, 0);
                 //=========================== Prisela kostka lega ================================================
                 if (Form1.blobArea > minBlobArea || Form1.stop) {
-                  //  brick.MotorA.Brake();//**************zvedak
+                  //  brick.MotorA.Brake();//**************rampa do krabicek
                     brick.MotorB.Brake();// pas 2 (dole)
                     brick.MotorC.Brake();// pas 1 (nahore)
+                    brickBezDisp.SetMotorState(NXTBrick.Motor.B, motorWheelsStop);
+                    brickBezDisp.SetMotorState(NXTBrick.Motor.C, motorElevatorStop);
                     //**********************************  vyklapeni a zklapeni
-                   // Thread.Sleep(milliseconds);
-                   Thread.Sleep(400);
+                    // Thread.Sleep(milliseconds);
+                    Thread.Sleep(400);
 
                     //-------------------------- Zajisteni kvalitnejsiho obrazu -----------------------
 
@@ -397,8 +460,63 @@ namespace PRO_camera_Test{
                     while (rotateDone) {
                         Thread.Sleep(50);
                     }
+                    Console.WriteLine("currentBox: "+ currentBox+ "; requiredBox: " + requiredBox);
+                    currentBox = 0;
+                   // requiredBox = 1;
+                    if (checkBoxRed.Checked) requiredBox = 0;
+                    else if (checkBoxGreen.Checked) requiredBox = 1;
+                    else if (checkBoxBlue.Checked) requiredBox = 2;
+                    else if (checkBoxYellow.Checked) requiredBox = -1;
+                   // else requiredBox = 0;
 
-                    
+                    int claimtState = currentBox - requiredBox;
+                    if (claimtState == 3) claimtState = -1;
+                    if (claimtState == -3) claimtState = 1;
+                    Console.WriteLine("claimtState: "+claimtState);
+                    switch (claimtState) {
+                        case 0:
+                            Console.WriteLine("case 0");
+                            break;
+                        case 1:
+                            Console.WriteLine("case 1");
+                            motorBoxes.Power = 80;
+                            motorBoxes.TurnRatio = 60;
+                            motorBoxes.Mode = NXTBrick.MotorMode.On;
+                            motorBoxes.Regulation = NXTBrick.MotorRegulationMode.Idle;
+                            motorBoxes.RunState = NXTBrick.MotorRunState.Running;
+                            motorBoxes.TachoLimit = 640;
+                            brickBezDisp.SetMotorState(NXTBrick.Motor.A, motorBoxes); // otoceni krabicek
+                            currentBox = requiredBox;
+                            Thread.Sleep(6000);
+                            break;
+                        case 2:
+                            Console.WriteLine("case 2");
+                            motorBoxes.Power = 80;
+                            motorBoxes.TurnRatio = 60;
+                            motorBoxes.Mode = NXTBrick.MotorMode.On;
+                            motorBoxes.Regulation = NXTBrick.MotorRegulationMode.Idle;
+                            motorBoxes.RunState = NXTBrick.MotorRunState.Running;
+                            motorBoxes.TachoLimit = 1280;
+                            brickBezDisp.SetMotorState(NXTBrick.Motor.A, motorBoxes); // otoceni krabicek
+                            currentBox = requiredBox;
+                            Thread.Sleep(12000);
+                            break;
+                        case -1:
+                            Console.WriteLine("case 3");
+                            motorBoxes.Power = -80;
+                            motorBoxes.TurnRatio = 60;
+                            motorBoxes.Mode = NXTBrick.MotorMode.On;
+                            motorBoxes.Regulation = NXTBrick.MotorRegulationMode.Idle;
+                            motorBoxes.RunState = NXTBrick.MotorRunState.Running;
+                            motorBoxes.TachoLimit = 640;
+                            brickBezDisp.SetMotorState(NXTBrick.Motor.A, motorBoxes); // otoceni krabicek
+                            currentBox = requiredBox;
+                            Thread.Sleep(6000);
+                            break;
+                        default:
+                            Console.WriteLine("a is not set");
+                            break;
+                    }
 
                     //richTextBox2.Text = "average hue = " + getAVG_Hue();
                     brick.MotorA.Run(25, 45);
@@ -410,8 +528,10 @@ namespace PRO_camera_Test{
                     //   Thread.Sleep(milliseconds);
                     // brick.MotorA.Run(-30, 30);
                    // brick.MotorA.Run(-15, 0);//***********
-                    brick.MotorB.Run(-15, 0);
+                    brick.MotorB.Run(-35, 0);//-15
                     brick.MotorC.Run(-20, 0);
+                    brickBezDisp.SetMotorState(NXTBrick.Motor.B, motorWheels);
+                    brickBezDisp.SetMotorState(NXTBrick.Motor.C, motorElevator);
                 }
                 //=========================== //Prisela kostka lega ===================================================
                 // }
@@ -467,7 +587,7 @@ namespace PRO_camera_Test{
             // process blobs
             Blob[] blobs = blobCounter.GetObjectsInformation();
             //    foreach (Rectangle recs in rects)
-            Console.WriteLine("array blobs.Length = "+ blobs.Length);
+ //////////         Console.WriteLine("array blobs.Length = "+ blobs.Length);
                 if ((checkBox3Biggest.Checked || automaticRun) && blobs.Length > 0) {
 
                 /*if (!newObjectDetect) { 
@@ -508,9 +628,9 @@ namespace PRO_camera_Test{
 
                      }*/
 
-                    Console.WriteLine("blobs[0].Area : " + blobs[0].Area+"  "+(int)blobs[0].ColorMean.GetHue());
+   //////                 Console.WriteLine("blobs[0].Area : " + blobs[0].Area+"  "+(int)blobs[0].ColorMean.GetHue());
                     //Console.WriteLine("blobs[0].Rectangle : " + blobs[0].Rectangle.Height + " * " + blobs[0].Rectangle.Width + " = " + blobs[0].Rectangle.Height * blobs[0].Rectangle.Width);
-                    Console.WriteLine("blobs[0].Rectangle : " + blobs[0].Rectangle.Height + " * " + blobs[0].Rectangle.Width + " = " +blobs[0].Rectangle.X + "x "+blobs[0].Rectangle.Y+"y");
+   //////                 Console.WriteLine("blobs[0].Rectangle : " + blobs[0].Rectangle.Height + " * " + blobs[0].Rectangle.Width + " = " +blobs[0].Rectangle.X + "x "+blobs[0].Rectangle.Y+"y");
 
                     /*richTextBox2.Text = "blobs[0].Area: " + blobs[0].Area+ "\n" + richTextBox2.Text + "\n";
                     richTextBox2.Text = "blobs[0].Rectangle: " + blobs[0].Rectangle.Height + "*" + blobs[0].Rectangle.Width + "=" + blobs[0].Rectangle.Height * blobs[0].Rectangle.Width + "\n" + richTextBox2.Text + "\n";
@@ -844,6 +964,7 @@ namespace PRO_camera_Test{
             if (n != 1) n--;
 
             avg = sum / n;
+/*********
             Console.WriteLine("avg HUE = "+ avg + " - pruper vlastni; ");
             //richTextBox2.Text = avg + " - pruper vlastni\n" + richTextBox2.Text;
             //richTextBox2.Text = hueValues.Average() + " - pruper\n"+ richTextBox2.Text ;
@@ -851,6 +972,7 @@ namespace PRO_camera_Test{
             Console.WriteLine(hueValues.Average() + " - pruper");
             Console.WriteLine(hueValues.Max() + " - max");
             Console.WriteLine(hueValues.Min() + " - min");
+**************/
             return avg;
 
         }
@@ -1115,6 +1237,10 @@ namespace PRO_camera_Test{
             }
         }
 
+        private void checkBox2_CheckedChanged(object sender, EventArgs e) {
+
+        }
+
         private void checkBox2Blob_CheckedChanged(object sender, EventArgs e) {
             if (checkBox2Blob.Checked) {
                 groupBox2.Enabled = true;
@@ -1129,6 +1255,7 @@ namespace PRO_camera_Test{
         private void checkBox3Biggest_CheckedChanged(object sender, EventArgs e) {
             if (checkBox3Biggest.Checked) {
                 checkBoxEdgeCorners.Enabled = true;
+                checkBoxComputePixels.Enabled = true;
             } else if (!checkBox3Biggest.Checked) {
                 checkBoxEdgeCorners.Enabled = false;
                 checkBoxComputePixels.Enabled = false;

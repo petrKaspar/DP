@@ -65,10 +65,14 @@
             this.btnFolderImages = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.checkBoxComputePixels = new System.Windows.Forms.CheckBox();
             this.checkBox1RemBack = new System.Windows.Forms.CheckBox();
             this.groupBox0 = new System.Windows.Forms.GroupBox();
             this.checkBoxEdgeCorners = new System.Windows.Forms.CheckBox();
-            this.checkBoxComputePixels = new System.Windows.Forms.CheckBox();
+            this.checkBoxRed = new System.Windows.Forms.CheckBox();
+            this.checkBoxGreen = new System.Windows.Forms.CheckBox();
+            this.checkBoxBlue = new System.Windows.Forms.CheckBox();
+            this.checkBoxYellow = new System.Windows.Forms.CheckBox();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -454,6 +458,16 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "groupBox2";
             // 
+            // checkBoxComputePixels
+            // 
+            this.checkBoxComputePixels.AutoSize = true;
+            this.checkBoxComputePixels.Location = new System.Drawing.Point(43, 43);
+            this.checkBoxComputePixels.Name = "checkBoxComputePixels";
+            this.checkBoxComputePixels.Size = new System.Drawing.Size(115, 17);
+            this.checkBoxComputePixels.TabIndex = 27;
+            this.checkBoxComputePixels.Text = "Compute the pixels";
+            this.checkBoxComputePixels.UseVisualStyleBackColor = true;
+            // 
             // checkBox1RemBack
             // 
             this.checkBox1RemBack.AutoSize = true;
@@ -486,15 +500,48 @@
             this.checkBoxEdgeCorners.Text = "Detect edge and corners";
             this.checkBoxEdgeCorners.UseVisualStyleBackColor = true;
             // 
-            // checkBoxComputePixels
+            // checkBoxRed
             // 
-            this.checkBoxComputePixels.AutoSize = true;
-            this.checkBoxComputePixels.Location = new System.Drawing.Point(43, 43);
-            this.checkBoxComputePixels.Name = "checkBoxComputePixels";
-            this.checkBoxComputePixels.Size = new System.Drawing.Size(115, 17);
-            this.checkBoxComputePixels.TabIndex = 27;
-            this.checkBoxComputePixels.Text = "Compute the pixels";
-            this.checkBoxComputePixels.UseVisualStyleBackColor = true;
+            this.checkBoxRed.AutoSize = true;
+            this.checkBoxRed.Checked = true;
+            this.checkBoxRed.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxRed.Location = new System.Drawing.Point(86, 562);
+            this.checkBoxRed.Name = "checkBoxRed";
+            this.checkBoxRed.Size = new System.Drawing.Size(46, 17);
+            this.checkBoxRed.TabIndex = 33;
+            this.checkBoxRed.Text = "Red";
+            this.checkBoxRed.UseVisualStyleBackColor = true;
+            this.checkBoxRed.CheckedChanged += new System.EventHandler(this.checkBox2_CheckedChanged);
+            // 
+            // checkBoxGreen
+            // 
+            this.checkBoxGreen.AutoSize = true;
+            this.checkBoxGreen.Location = new System.Drawing.Point(86, 585);
+            this.checkBoxGreen.Name = "checkBoxGreen";
+            this.checkBoxGreen.Size = new System.Drawing.Size(55, 17);
+            this.checkBoxGreen.TabIndex = 34;
+            this.checkBoxGreen.Text = "Green";
+            this.checkBoxGreen.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxBlue
+            // 
+            this.checkBoxBlue.AutoSize = true;
+            this.checkBoxBlue.Location = new System.Drawing.Point(86, 608);
+            this.checkBoxBlue.Name = "checkBoxBlue";
+            this.checkBoxBlue.Size = new System.Drawing.Size(47, 17);
+            this.checkBoxBlue.TabIndex = 35;
+            this.checkBoxBlue.Text = "Blue";
+            this.checkBoxBlue.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxYellow
+            // 
+            this.checkBoxYellow.AutoSize = true;
+            this.checkBoxYellow.Location = new System.Drawing.Point(86, 631);
+            this.checkBoxYellow.Name = "checkBoxYellow";
+            this.checkBoxYellow.Size = new System.Drawing.Size(57, 17);
+            this.checkBoxYellow.TabIndex = 36;
+            this.checkBoxYellow.Text = "Yellow";
+            this.checkBoxYellow.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
@@ -502,6 +549,10 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.ClientSize = new System.Drawing.Size(944, 675);
+            this.Controls.Add(this.checkBoxYellow);
+            this.Controls.Add(this.checkBoxBlue);
+            this.Controls.Add(this.checkBoxGreen);
+            this.Controls.Add(this.checkBoxRed);
             this.Controls.Add(this.checkBoxEdgeCorners);
             this.Controls.Add(this.groupBox0);
             this.Controls.Add(this.groupBox2);
@@ -595,6 +646,10 @@
         private System.Windows.Forms.GroupBox groupBox0;
         private System.Windows.Forms.CheckBox checkBoxEdgeCorners;
         private System.Windows.Forms.CheckBox checkBoxComputePixels;
+        private System.Windows.Forms.CheckBox checkBoxRed;
+        private System.Windows.Forms.CheckBox checkBoxGreen;
+        private System.Windows.Forms.CheckBox checkBoxBlue;
+        private System.Windows.Forms.CheckBox checkBoxYellow;
     }
 }
 
