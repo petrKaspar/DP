@@ -214,11 +214,15 @@ namespace PRO_camera_Test{
             /*if (videoSourcePlayer1.IsRunning) {
                 pictureBox2.Image = (Bitmap)videoSourcePlayer1.GetCurrentVideoFrame();
             }*/
+            
+            /*************************/
+            ////// Pokus se program spousti pro testovaci ucely bez pripojenych NXT, je nutne zakomentovat spousteni threadu1 (//thread1.Start();). Predejde se tak padu
+            //  thread1.Start();
+            /*************************/
 
-            thread1.Start();
             //Form1 thread1 = new Form1();
             //new Thread(thread1.motoryPasuuZvedak).Start();
-            
+
         }
 
         private void btnStop_Click(object sender, EventArgs e) {
@@ -664,14 +668,14 @@ namespace PRO_camera_Test{
                 // Graphics g = Graphics.FromImage(bitmap);
                 //PointF drawPoin2 = new PointF(bitmap, bitmap. + objectRect.Height + 4);
                 //biggestBlobInfo = "avg HUE = " + (int)blobs[0].ColorMean.GetHue();
-                biggestBlobInfo = "avg HUE = " + getAVG_Hue(bitmap)+ "; Size=" + bitmap.Width + " x " + bitmap.Height+" = "+ bitmap.Width*bitmap.Height;
+                biggestBlobInfo = "avg HUE = " + getAVG_Hue(bitmap)+ "; Size=" + bitmap.Width + " x " + bitmap.Height+" = "+ bitmap.Width*bitmap.Height+"\n";
                 /*g.DrawString(imageInfo, new Font("Arial", 12), new SolidBrush(Color.Black), new System.Drawing.Point(bitmap.Width- bitmap.Width/2, bitmap.Height- bitmap.Height/2)); //imageInfo.Length
                     g.Dispose();
                 */
                 int nPixels = 0;
                 if (checkBoxComputePixels.Checked || automaticRun) {
                     nPixels = ComputePixels(bitmap);
-                    biggestBlobInfo += "; nPixels = "+nPixels;
+                    biggestBlobInfo += "nPixels = "+nPixels;
                 }
                 /*
                 BlobCounter blobCounter2 = new BlobCounter();
@@ -709,7 +713,18 @@ namespace PRO_camera_Test{
                 }*/
                 if (checkBoxEdgeCorners.Checked || automaticRun) {
                     biggestBlobInfo = "avg HUE = " + getAVG_Hue(bitmap);
+
+                    /*
+                   // if (checkBoxFillHole.checked){
+                        var filterCountPix = new FiltersSequence(Grayscale.CommonAlgorithms.BT709,
+                                                        new Threshold(2), new FillHoles());
+                        bitmap = filterCountPix.Apply(bitmap);
+                    //    } 
+                    */
                     bitmap = DetectEdgesCorners(bitmap);
+
+                    
+
                 }   
                 /*
                                 nPixels = 0;

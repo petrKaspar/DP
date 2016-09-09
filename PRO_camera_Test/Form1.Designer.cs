@@ -379,9 +379,9 @@
             // 
             this.btnPropPage.Location = new System.Drawing.Point(322, 34);
             this.btnPropPage.Name = "btnPropPage";
-            this.btnPropPage.Size = new System.Drawing.Size(75, 23);
+            this.btnPropPage.Size = new System.Drawing.Size(112, 23);
             this.btnPropPage.TabIndex = 24;
-            this.btnPropPage.Text = "button1";
+            this.btnPropPage.Text = "Camera settings";
             this.btnPropPage.UseVisualStyleBackColor = true;
             this.btnPropPage.Click += new System.EventHandler(this.btnPropPage_Click);
             // 
