@@ -61,7 +61,7 @@ namespace PRO_camera_Test{
         MotionDetector motionDetector;
         float f;
         private static int thresholdBG, blobMinWidth = 40, blobMinHeight = 40;
-        private Boolean automaticRun = false;
+        private Boolean automaticRun = false, croppingImagePressed = false;
         public int qqq;
         static int blobArea = 0;
         static int minBlobArea;
@@ -166,7 +166,7 @@ namespace PRO_camera_Test{
             }
             videoDevice.VideoResolution = videoDevice.VideoCapabilities[2];//14
             videoSourcePlayer1.VideoSource = videoDevice;
-
+            
             stopStartVideo = true;
             /**
             Resolution Number 0
@@ -210,11 +210,11 @@ namespace PRO_camera_Test{
 */
            // videoSourcePlayer1.NewFrame +=  new AForge.Controls.VideoSourcePlayer.NewFrameHandler(videoSourcePlayer1_NewFrame);
             videoSourcePlayer1.Start();
-
+            
             /*if (videoSourcePlayer1.IsRunning) {
                 pictureBox2.Image = (Bitmap)videoSourcePlayer1.GetCurrentVideoFrame();
             }*/
-            
+
             /*************************/
             ////// Pokus se program spousti pro testovaci ucely bez pripojenych NXT, je nutne zakomentovat spousteni threadu1 (//thread1.Start();). Predejde se tak padu
             //  thread1.Start();
@@ -263,23 +263,210 @@ namespace PRO_camera_Test{
             image.UnlockBits(bitmapData);
             return image;*/
         }
+        private Bitmap imageOfRamp = null;
+        private void rampImage() {
+            //ulozi do promenne obazek podlozky pod kamerou pro pozdejsi zjisteni, zda se tam objevila kostka lega
+            imageOfRamp = (Bitmap)pictureBox2.Image;
+        }
 
+
+        //******************* \/\/\ROI******************************
+        private System.Drawing.Point RectStartPoint;
+        private Rectangle rectangleForCropping = new Rectangle();
+        private Rectangle croppedRectangle = new Rectangle();
+        Region regionOI = new Region();
+        private Brush selectionBrush = new SolidBrush(Color.FromArgb(120, 70, 155, 230));
+        
+        // Start Rectangle
+        //
+        private void pictureBox2_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            // Determine the initial rectangle coordinates...
+            RectStartPoint = e.Location;
+            Invalidate();
+        }
+
+        // Draw Rectangle
+        //
+        private void pictureBox2_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e) {
+            if (e.Button != MouseButtons.Left)
+                return;
+            System.Drawing.Point tempEndPoint = e.Location;
+            rectangleForCropping.Location = new System.Drawing.Point(
+                Math.Min(RectStartPoint.X, tempEndPoint.X),
+                Math.Min(RectStartPoint.Y, tempEndPoint.Y));
+            rectangleForCropping.Size = new Size(
+                Math.Abs(RectStartPoint.X - tempEndPoint.X),
+                Math.Abs(RectStartPoint.Y - tempEndPoint.Y));
+            pictureBox2.Invalidate();
+            
+        }
+
+        // Draw Area
+        //
+        private System.Windows.Forms.PaintEventArgs ee;
+        private void pictureBox2_Paint(object sender, System.Windows.Forms.PaintEventArgs e){
+            // Draw the rectangle...
+            ee = e;
+            if (pictureBox2.Image != null){
+                if (rectangleForCropping != null && rectangleForCropping.Width > 0 && rectangleForCropping.Height > 0)
+                {
+                    // e.Graphics.FillEllipse(selectionBrush, rectangleForCropping);// (Color.Azure);// FillRectangle(selectionBrush, rectangleForCropping);
+                    // oznaci se vse krome vybraneho obdelniku
+                    regionOI.MakeInfinite();
+                    regionOI.Exclude(rectangleForCropping);
+                    ee.Graphics.FillRegion(selectionBrush, regionOI);
+                }
+            }
+        }
+
+        private void pictureBox2_MouseUp(object sender, MouseEventArgs e){
+            if (e.Button == MouseButtons.Right)
+            {
+                if (rectangleForCropping.Contains(e.Location))
+                {
+                    Debug.WriteLine("Right click");
+                }
+            }
+        }
+        private void pictureBox2_MouseClick(object sender, MouseEventArgs e){
+
+        }
+        //////******************* \/\/\ROI******************************
+        //*************************  Difference  ***************************
+        private void btnGo_Click(Bitmap image1, Bitmap image2)
+        {
+            Bitmap bm1 = (Bitmap)pictureBox2.Image;
+
+            // Make a difference image.
+            int wid = Math.Min(bm1.Width, imageOfRamp.Width);
+            int hgt = Math.Min(bm1.Height, imageOfRamp.Height);
+            Bitmap image3 = new Bitmap(wid, hgt);
+
+            // Create the difference image.
+            bool are_identical = true;
+            Color eq_color = Color.White;
+            Color ne_color = Color.Red;
+            for (int x = 0; x < wid; x++){
+                for (int y = 0; y < hgt; y++) {
+                    if (bm1.GetPixel(x, y).Equals(imageOfRamp.GetPixel(x, y)))
+                        image3.SetPixel(x, y, eq_color);
+                    else {
+                        image3.SetPixel(x, y, ne_color);
+                        are_identical = false;
+                    }
+                }
+            }
+
+            // Display the result.
+            pictureBox2.Image = image3;
+
+            if ((bm1.Width != imageOfRamp.Width) || (bm1.Height != imageOfRamp.Height)) are_identical = false;
+            if (are_identical) richTextBox2.Text = "----The images are identical\n" + richTextBox2.Text + "\n";
+            else richTextBox2.Text = "----The images are different\n" + richTextBox2.Text + "\n";
+        }
+        //***********************\\\\\\\ Difference  ***************************
         //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
         //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
         //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
         private void videoSourcePlayer1_NewFrame(object sender, ref Bitmap image) {
             //public void videoSourcePlayer1_NewFrame(object sender, NewFrameEventArgs eventArgs) {
+            
+
+            // pravraceni obrazu o 180 stupnu
+            Mirror filter180 = new Mirror(true, true);
+            filter180.ApplyInPlace(image);
+
             Bitmap bitmap2 = new Bitmap(image);
+            Bitmap bitmap3 = new Bitmap(image);
 
             // create filter
             BrightnessCorrection filter = new BrightnessCorrection(-50);
             // apply the filter
             //filter.ApplyInPlace(bitmap2);
-            
+
             // pozdeji treba switch
+
+
+            // if (croppingImagePressed && rectangleForCropping != null && rectangleForCropping.Width > 0 && rectangleForCropping.Height > 0)
+            if (croppingImagePressed) {
+                bitmap2 = CropImage(bitmap2, croppedRectangle.X, croppedRectangle.Y, croppedRectangle.Width, croppedRectangle.Height);
+            }
+
+            /*Bitmap result = new Bitmap(bitmap2.Width, bitmap2.Height, PixelFormat.Format8bppIndexed);
+
+            Bitmap newBitmap = new Bitmap(result.Width, result.Height);
+            Graphics graphics = Graphics.FromImage(newBitmap);
+            graphics.DrawImage(result,  0, 0);
+            */
+            /*using (Graphics g = Graphics.FromImage(result)) {
+                g.DrawImage(bitmap2, 0, 0, image.Width, image.Height);
+            }*/
+            //  bitmap2 = newBitmap;
+            /*if((Bitmap)pictureBox1.Image != null) { 
+            Difference filter3 = new Difference((Bitmap)pictureBox1.Image);
+            // apply the filter
+            bitmap2 = filter3.Apply(bitmap2);
+            }*/
+
+            // create processing filters sequence
+            if (imageOfBackground != null) { 
+                FiltersSequence processingFilter = new FiltersSequence();
+                processingFilter.Add(new Difference(imageOfBackground));
+                processingFilter.Add(new Grayscale(0.2126, 0.7152, 0.0722));
+                processingFilter.Add(new Threshold(155));
+                processingFilter.Add(new Opening());
+                processingFilter.Add(new Edges());
+                processingFilter.Add(new Dilatation());
+                processingFilter.Add(new Dilatation());
+                // apply the 
+
+                FillHoles filter2 = new FillHoles();
+                filter2.MaxHoleHeight = 500;
+                filter2.MaxHoleWidth = 500;
+                filter2.CoupledSizeFiltering = false;
+                // apply the filter
+
+                Bitmap tmp1 = processingFilter.Apply(bitmap3);
+                tmp1 = filter2.Apply(tmp1);
+                Bitmap result = bitmap3;
+                for (int i = 0; i < tmp1.Width; i++) {
+                    for (int j = 0; j < tmp1.Height; j++) {
+                        if (tmp1.GetPixel(i, j) == Color.White || tmp1.GetPixel(i, j).B == 255) {
+                            result.SetPixel(i, j, bitmap3.GetPixel(i, j));
+                        } else result.SetPixel(i, j, Color.Black);
+                    }
+                }
+                bitmap2 = result;
+                bitmap2 = ConvertTo8bpp(bitmap2);
+
+                /*                
+                // extract red channel from the original image
+                IFilter extrachChannel = new ExtractChannel(RGB.R);
+                Bitmap redChannel = extrachChannel.Apply(bitmap3);
+                //  merge red channel with moving object borders
+                Merge mergeFilter = new Merge();
+                mergeFilter.OverlayImage = tmp1;
+                Bitmap tmp2 = mergeFilter.Apply(redChannel);
+                // replace red channel in the original image
+                ReplaceChannel replaceChannel1 = new ReplaceChannel(RGB.R, tmp2);
+                replaceChannel1.ChannelImage = tmp2;
+                Bitmap tmp3 = replaceChannel1.Apply(bitmap3);
+                
+                bitmap2 = tmp3;*/
+            }
+            ////////////////////////////////////////////AForge.Imaging.Filters.Difference;
+
+
+            int pom;
+            for (int i = 0; i < bitmap2.Width; i++) {
+                for (int j = 0; j < bitmap2.Height; j++) {
+                    //bitmap2.SetPixel(i,j,(Color)(bitmap2.GetPixel(i,j).R * 7 / 255) << 5 + (bitmap2.GetPixel(i, j).G * 7 / 255) << 2 + (bitmap2.GetPixel(i, j).B * 3 / 255));
+                }
+            }
+            
             if (checkBox1RemBack.Checked || automaticRun) { 
                 bitmap2 = removeBackground(bitmap2);
-
             }
 
             if(checkBox2Blob.Checked || automaticRun) {
@@ -307,6 +494,15 @@ namespace PRO_camera_Test{
         //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
         //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
         //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
+
+
+        public static Bitmap ConvertTo8bpp(System.Drawing.Image img) {
+            var ms = new System.IO.MemoryStream();   // Don't use using!!!
+            img.Save(ms, System.Drawing.Imaging.ImageFormat.Gif);
+            ms.Position = 0;
+            return new Bitmap(ms);
+        }
+
 
         private void timer1_Tick(object sender, EventArgs e) {
             label3.Text = "Value: " + f.ToString();
@@ -1006,6 +1202,7 @@ namespace PRO_camera_Test{
             }
             //pictureBox1.Image = (Bitmap)videoSourcePlayer1.GetCurrentVideoFrame().Clone();
             //D   }
+            label6.Text = "Captured Image";
         }
 
         private void btnSave_Click(object sender, EventArgs e) {
@@ -1017,6 +1214,7 @@ namespace PRO_camera_Test{
 
             } else MessageBox.Show("Zadny obrazek k dispozici!");
             blobArea = 4444;
+            label6.Text = "Saved picture";
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e) {
@@ -1202,10 +1400,29 @@ namespace PRO_camera_Test{
             return ret;
         }//D
 
+        public static Bitmap CropImage(System.Drawing.Image source, int x, int y, int width, int height) {
+            Rectangle crop = new Rectangle(x, y, width, height);
 
+            var bmp = new Bitmap(crop.Width, crop.Height);
+            using (var gr = Graphics.FromImage(bmp)) {
+                gr.DrawImage(source, new Rectangle(0, 0, bmp.Width, bmp.Height), crop, GraphicsUnit.Pixel);
+            }
+            return bmp;
+        }
         private void btnCropImg_Click(object sender, EventArgs e) {
+            if (rectangleForCropping != null && rectangleForCropping.Width > 0 && rectangleForCropping.Height > 0) croppedRectangle = rectangleForCropping;
+            croppingImagePressed = true;
+            rectangleForCropping.Width = 0;
+            //pictureBox2.Invalidate(rectangleForCropping);
+            /*  if (rectangleForCropping.Contains(5,5)) {
+                  Debug.WriteLine("Right click");
+
+          }*/
+            //pictureBox2.Invalidate();
+            /*  Stare orezavani v novem formu
             Form2CroppingImage formCropImg = new Form2CroppingImage(this, pictureBox2.Image, pictureBox2.Width, pictureBox2.Height);
             formCropImg.Show();
+            */
         }
 
         private void btnPropPage_Click(object sender, EventArgs e) {
@@ -1230,11 +1447,11 @@ namespace PRO_camera_Test{
             Process.Start(directoryPath);
         }
 
-        private void pictureBox2_Paint(object sender, PaintEventArgs e) {
+      /*  private void pictureBox2_Paint(object sender, PaintEventArgs e) {
             using (Font myFont = new Font("Arial", 9)) {
                 e.Graphics.DrawString(biggestBlobInfo, myFont, Brushes.MidnightBlue, new System.Drawing.Point(2, 2));
             }
-        }
+        }*/
         private void checkBox1_CheckedChanged(object sender, EventArgs e) {
             automaticRun = checkBox1.Checked;
         }
@@ -1254,6 +1471,20 @@ namespace PRO_camera_Test{
 
         private void checkBox2_CheckedChanged(object sender, EventArgs e) {
 
+        }
+
+        // vytvori se obrazek podlozky pod kamerou, aby se pozdeji od neho odecetl obraz s predmetem
+        private Bitmap imageOfBackground = null;
+        private void btnMakeImageOfPad_Click(object sender, EventArgs e) {
+            imageOfBackground = (Bitmap)pictureBox2.Image.Clone();
+            pictureBox1.Image = imageOfBackground;
+            label6.Text = "The Image Of the pad";
+        }
+
+        private void button1_Click(object sender, EventArgs e) {
+            croppingImagePressed = false;
+            pictureBox1.Image = null;
+            Invalidate();
         }
 
         private void checkBox2Blob_CheckedChanged(object sender, EventArgs e) {

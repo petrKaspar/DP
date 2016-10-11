@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PRO_camera_Test", "PRO_camera_Test\PRO_camera_Test.csproj", "{069A4106-C77F-4689-811A-0B8B856C49C7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DP_camera", "PRO_camera_Test\DP_camera.csproj", "{069A4106-C77F-4689-811A-0B8B856C49C7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
