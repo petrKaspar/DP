@@ -77,6 +77,7 @@
             this.checkBox2 = new System.Windows.Forms.CheckBox();
             this.btnMakeImageOfPad = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
+            this.btnGetObject = new System.Windows.Forms.Button();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -591,12 +592,23 @@
             this.label6.TabIndex = 40;
             this.label6.Text = "label6";
             // 
+            // btnGetObject
+            // 
+            this.btnGetObject.Location = new System.Drawing.Point(942, 205);
+            this.btnGetObject.Name = "btnGetObject";
+            this.btnGetObject.Size = new System.Drawing.Size(75, 23);
+            this.btnGetObject.TabIndex = 41;
+            this.btnGetObject.Text = "Get Object";
+            this.btnGetObject.UseVisualStyleBackColor = true;
+            this.btnGetObject.Click += new System.EventHandler(this.btnGetObject_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.ClientSize = new System.Drawing.Size(1073, 675);
+            this.Controls.Add(this.btnGetObject);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.btnMakeImageOfPad);
             this.Controls.Add(this.groupBox3);
@@ -704,6 +716,7 @@
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button btnMakeImageOfPad;
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Button btnGetObject;
     }
 }
 

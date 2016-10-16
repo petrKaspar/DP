@@ -366,6 +366,27 @@ namespace PRO_camera_Test{
             else richTextBox2.Text = "----The images are different\n" + richTextBox2.Text + "\n";
         }
         //***********************\\\\\\\ Difference  ***************************
+        //============================= run python script ====================
+        private void runPythonScript(String script) {
+            Process process = new Process();
+            process.StartInfo.FileName = @"C:\\Users\\Petr\\Anaconda3\\python.exe";
+            //process.StartInfo.Arguments = @"C:\\Users\\Petr\\Documents\\test.py";
+            //process.StartInfo.Arguments = @"C:\\Users\\Petr\\Downloads\\howto_compare_images3\\bin\\Debug\\images\\backgroundSubtractor.py";
+            process.StartInfo.Arguments = @script; // @"backgroundSubtractor.py";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
+            process.Start();
+            process.BeginOutputReadLine();
+            process.WaitForExit();
+            process.Close();
+        }
+        private static void OutputHandler(object sendingProcess, DataReceivedEventArgs outLine) {
+            if (outLine.Data != null)
+                Console.Out.WriteLine(outLine.Data.ToString());
+        }
+        //============================= \\\ run python script ====================
         //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
         //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
         //NewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrameNewFrame
@@ -409,6 +430,7 @@ namespace PRO_camera_Test{
             bitmap2 = filter3.Apply(bitmap2);
             }*/
 
+            /*      //   ----------------- odecteni pozadi pomoci filtruu -------------------
             // create processing filters sequence
             if (imageOfBackground != null) { 
                 FiltersSequence processingFilter = new FiltersSequence();
@@ -454,17 +476,19 @@ namespace PRO_camera_Test{
                 Bitmap tmp3 = replaceChannel1.Apply(bitmap3);
                 
                 bitmap2 = tmp3;*/
-            }
+            ///}  -----------------------------------------------*
             ////////////////////////////////////////////AForge.Imaging.Filters.Difference;
 
-
+            /*
             int pom;
             for (int i = 0; i < bitmap2.Width; i++) {
                 for (int j = 0; j < bitmap2.Height; j++) {
                     //bitmap2.SetPixel(i,j,(Color)(bitmap2.GetPixel(i,j).R * 7 / 255) << 5 + (bitmap2.GetPixel(i, j).G * 7 / 255) << 2 + (bitmap2.GetPixel(i, j).B * 3 / 255));
                 }
             }
-            
+            */
+
+
             if (checkBox1RemBack.Checked || automaticRun) { 
                 bitmap2 = removeBackground(bitmap2);
             }
@@ -1475,10 +1499,22 @@ namespace PRO_camera_Test{
 
         // vytvori se obrazek podlozky pod kamerou, aby se pozdeji od neho odecetl obraz s predmetem
         private Bitmap imageOfBackground = null;
+        private Bitmap imageOfPadWithObject = null;
         private void btnMakeImageOfPad_Click(object sender, EventArgs e) {
             imageOfBackground = (Bitmap)pictureBox2.Image.Clone();
             pictureBox1.Image = imageOfBackground;
             label6.Text = "The Image Of the pad";
+            //Console.WriteLine("imageOfBackground - " + imageOfBackground);
+            pictureBox1.Image.Save(directoryPath + "images\\imageOfBackground.bmp", ImageFormat.Bmp);
+            
+        }
+
+        private void btnGetObject_Click(object sender, EventArgs e) {
+            imageOfPadWithObject = (Bitmap)pictureBox2.Image.Clone();
+            pictureBox1.Image = imageOfPadWithObject;
+            label6.Text = "The Image Of the object on the base";
+            pictureBox1.Image.Save(directoryPath + "images\\imageOfPadWithObject.bmp", ImageFormat.Bmp);
+            runPythonScript("backgroundSubtractor.py");
         }
 
         private void button1_Click(object sender, EventArgs e) {
