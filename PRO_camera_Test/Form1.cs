@@ -1517,6 +1517,10 @@ namespace PRO_camera_Test{
             runPythonScript("backgroundSubtractor.py");
         }
 
+        private void pictureBox2_Click(object sender, EventArgs e) {
+
+        }
+
         private void button1_Click(object sender, EventArgs e) {
             croppingImagePressed = false;
             pictureBox1.Image = null;
