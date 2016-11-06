@@ -6,6 +6,8 @@ from PIL import Image
 from scipy.misc import imread
 from scipy import ndimage as ndi
 import time
+import scipy.ndimage as ndimage
+import re
 
 #im1 = cv2.imread('images\\background.bmp')
 #im2 = cv2.imread('images\\currentImage.bmp')
@@ -16,9 +18,9 @@ import time
 # im1 = cv2.imread('images\\imageOfBackground.bmp')
 # im2 = cv2.imread('images\\imageOfPadWithObject.bmp')
 
-im1 = cv2.imread('TestCV191016_14-08-32.bmp')
-im2 = cv2.imread('TestCV191016_14-07-30.bmp')
-threshold = 50
+im1 = cv2.imread('b.bmp')
+im2 = cv2.imread('TestCV191016_14-16-26.bmp')
+# threshold = 50
 
 
 current_frame_gray = cv2.cvtColor(im1, cv2.COLOR_BGR2RGB)
@@ -103,6 +105,43 @@ def black_or_b(im1, im2):
     threshold, th3 = cv2.threshold(img555, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)   #automaticky se vybere vhodny prah na zaklade hist, ktery se take zjisti sam
     print ("Auto threshold = {}".format(threshold))
     cv2.imshow('Auto threshold = {}'.format(threshold),th3)
+
+
+    """
+    immmm = Image.fromarray(th3)
+    immmm.save("images\\testovaci.bmp")
+    """
+
+    # ======================================================================
+
+    label_im, nb_labels = ndimage.label(th3)
+    print(nb_labels)
+    sizes = ndimage.sum(th3, label_im, range(nb_labels + 1))
+    mask_size = sizes != sizes.max()
+    remove_pixel = mask_size[label_im]
+    label_im[remove_pixel] = 0
+    label_im[label_im > 0] = 1
+    #
+    # plt.figure("llllllaaabbbeeeellllllsssssssll")
+    # plt.imshow(label_im, cmap="spectral", interpolation='nearest')
+    #
+    # cv2.imshow('current_output LABEL', label_im)
+    #
+    # # Identify discrete regions and assign unique IDs
+    # current_output, num_ids = ndimage.label(th3, structure=np.ones((3, 3)))
+    # print(current_output.max(axis=1),'mmmmmmmmmmmmmmm')
+    # print(num_ids,'current_outputcurrent_outputcurrent_outputcurrent_outputcurrent_outputcurrent_output')
+    # # Plot outputs
+    # plt.figure("labellllllllll")
+    # plt.imshow(th3, cmap="spectral", interpolation='nearest')
+    # plt.figure("llllllaaabbbeeeellllllll")
+    # plt.imshow(current_output, cmap="spectral", interpolation='nearest')
+    # cv2.imshow('current_output LABEL', current_output)
+
+
+    # ======================================================================
+
+
     th3 = cv2.morphologyEx(th3, cv2.MORPH_OPEN, kernel)
     th3 = cv2.dilate(th3,kernel,iterations = 1)
 
@@ -140,7 +179,7 @@ def black_or_b(im1, im2):
 
     th33 = ndi.binary_fill_holes(th3)
     plt.subplot(2, 3, 5)
-    plt.imshow(th33, 'gray')
+    plt.imshow(label_im, 'gray')
     plt.axis("off")
 
     mask_inv = cv2.bitwise_not(th3)
@@ -154,7 +193,7 @@ def black_or_b(im1, im2):
     #mask33 = cv2.bitwise_not(th33)
     # Take only region of logo from logo image.
     from skimage import img_as_ubyte
-    cv_image = img_as_ubyte(th33)   #po vyplneni der se z nejakeho duvodu musi obrazek prevest zpet na format cv2...
+    cv_image = img_as_ubyte(label_im)  #img_as_ubyte(th33) ; #po vyplneni der se z nejakeho duvodu musi obrazek prevest zpet na format cv2...
     img2_fg = cv2.bitwise_and(im2, im2, mask=cv_image)
     img2_fg = cv2.cvtColor(img2_fg, cv2.COLOR_BGR2RGB)
     #cv2.imshow('img1_bg', img2_fg)
@@ -265,6 +304,37 @@ def foundObject_hue(foundObject):
     print("hist_hue_img.argmax() = ",hist_hue_img.argmax())
     return maxXwhereMaxY
 
+def getTextColorFromRGB(img5):
+
+    fname = 'colors64.txt'
+    lines = [re.split('[=,-]+', lines.strip('\n')) for lines in open(fname)]
+    for ele in lines:
+        ele.append(0)  # pocitadlo nalezeni
+    print(lines)
+
+    for y in range(img5.shape[0]):
+        for x in range(img5.shape[1]):
+            b = img5[y][x][0]
+            g = img5[y][x][1]
+            r = img5[y][x][2]
+            if r > 0 or g > 0 or b > 0:
+                for a in lines:
+                    #print(a)
+                    if (int(a[1])+0  <= r <= int(a[2])+0) and (int(a[3])+0  <= g <= int(a[4])+0) and (int(a[5])+0  <= b <= int(a[6])+0):
+                        #a[0].append('aaaaaaaaaaa')
+                        a[7] += 1
+                        ##############print(r, g, b, " = ",a[0])
+                        #return a[0]
+
+    maxi = ['', '', '', '', '', '', '', 0]
+    for c in lines:
+        print(c[0], ' - ', c[7])
+        if c[7] > maxi[7]: maxi = c
+
+    print('*****************\n',maxi,'\n*****************')
+    return maxi[0]
+
+
 #import mahotas
 foundObject = black_or_b(current_frame_gray, previous_frame_gray).astype(np.uint8)
 
@@ -284,6 +354,10 @@ ts = int(time.time())
 immmm = Image.fromarray(cv2.cvtColor(foundObject, cv2.COLOR_BGR2RGB))
 immmm.save("images\\objectFound{}.bmp".format(ts))
 #cv2.imshow('images\\aaaaaaaaaaaaaaaa', foundObject)
+
+www = getTextColorFromRGB(foundObject)
+print(www)
+
 
 # import colorsys
 # r, g, b = 0, 0, 255
