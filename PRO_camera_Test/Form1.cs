@@ -164,7 +164,7 @@ namespace PRO_camera_Test{
                 //pokud bych chtel rozliseni zadavat rucne, pridam do vyberu zarizeni prazdne misto a po vzberu skutecneh kamerz, hned nactu moznosti rozliseni
                 Console.WriteLine(resolution_size);
             }
-            videoDevice.VideoResolution = videoDevice.VideoCapabilities[2];//14
+            videoDevice.VideoResolution = videoDevice.VideoCapabilities[5];//14
             videoSourcePlayer1.VideoSource = videoDevice;
             
             stopStartVideo = true;
@@ -1232,9 +1232,9 @@ namespace PRO_camera_Test{
         private void btnSave_Click(object sender, EventArgs e) {
             if (pictureBox1.Image != null) {
                 //string path = System.Reflection.Assembly.GetExecutingAssembly().Location;
-                String cas = string.Format("{0:ddMMyy_HH-mm-ss}", DateTime.Now);
+                String cas = string.Format("{0:ddMMyy_HH_mm_ss}", DateTime.Now);
                 Console.WriteLine("sccccsss- " + cas);
-                pictureBox1.Image.Save(directoryPath + "TestCV" + cas + ".bmp", ImageFormat.Bmp);
+                pictureBox1.Image.Save(directoryPath + "Img__" + cas + ".bmp", ImageFormat.Bmp);
 
             } else MessageBox.Show("Zadny obrazek k dispozici!");
             blobArea = 4444;
@@ -1513,8 +1513,8 @@ namespace PRO_camera_Test{
             imageOfPadWithObject = (Bitmap)pictureBox2.Image.Clone();
             pictureBox1.Image = imageOfPadWithObject;
             label6.Text = "The Image Of the object on the base";
-            pictureBox1.Image.Save(directoryPath + "images\\imageOfPadWithObject.bmp", ImageFormat.Bmp);
-            runPythonScript("backgroundSubtractor.py");
+            /*pictureBox1.Image.Save(directoryPath + "images\\imageOfPadWithObject.bmp", ImageFormat.Bmp);
+            runPythonScript("backgroundSubtractor.py");*/
         }
 
         private void pictureBox2_Click(object sender, EventArgs e) {

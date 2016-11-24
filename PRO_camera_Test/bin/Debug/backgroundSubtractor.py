@@ -1,14 +1,21 @@
+import imutils
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 from PIL import Image
 #from PIL import ImageChop
+from PIL import ImageOps
+from matplotlib import gridspec
 from scipy.misc import imread
 from scipy import ndimage as ndi
 import time
 import scipy.ndimage as ndimage
 import re
+from imutils import perspective
+from imutils import contours
+from scipy.spatial import distance as dist
 
+from decimal import *
 #im1 = cv2.imread('images\\background.bmp')
 #im2 = cv2.imread('images\\currentImage.bmp')
 
@@ -19,8 +26,11 @@ import re
 # im2 = cv2.imread('images\\imageOfPadWithObject.bmp')
 
 im1 = cv2.imread('b.bmp')
-im2 = cv2.imread('TestCV191016_14-16-26.bmp')
-# threshold = 50
+im2 = cv2.imread('TestCV191016_14-17-57.bmp')
+
+im1 = cv2.imread('Img__231116_15_20_40.bmp')
+im2 = cv2.imread('Img__231116_15_14_01.bmp')
+
 
 
 current_frame_gray = cv2.cvtColor(im1, cv2.COLOR_BGR2RGB)
@@ -80,12 +90,15 @@ def black_or_b(im1, im2):
 
     plt.subplot(2,3,1)
     plt.imshow(im1)
+    plt.title('Background')
     plt.axis("off")
     plt.subplot(2,3,2)
     plt.imshow(im2)
+    plt.title('Original image')
     plt.axis("off")
     plt.subplot(2,3,3)
     plt.imshow(diff)
+    plt.title('Diff')
     plt.axis("off")
 
     #img555 = cv2.medianBlur(diff, 5)
@@ -94,6 +107,7 @@ def black_or_b(im1, im2):
 
     plt.subplot(234)
     plt.imshow(img555, cmap='gray')
+    plt.title('Diff gray')
     plt.axis("off")
 
     #
@@ -104,7 +118,7 @@ def black_or_b(im1, im2):
     #ret,th3 = cv2.threshold(img555,threshold,255,cv2.THRESH_BINARY)
     threshold, th3 = cv2.threshold(img555, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)   #automaticky se vybere vhodny prah na zaklade hist, ktery se take zjisti sam
     print ("Auto threshold = {}".format(threshold))
-    cv2.imshow('Auto threshold = {}'.format(threshold),th3)
+    cv2.imshow('{} = auto threshold'.format(threshold),th3)
 
 
     """
@@ -113,7 +127,7 @@ def black_or_b(im1, im2):
     """
 
     # ======================================================================
-
+    # label kazde osamocene oblasti prida nejake cislo pro kazdy pixel. Kterych cisel bude nejvice, ponecha se dana oblast v obraze
     label_im, nb_labels = ndimage.label(th3)
     print(nb_labels)
     sizes = ndimage.sum(th3, label_im, range(nb_labels + 1))
@@ -177,10 +191,74 @@ def black_or_b(im1, im2):
     # im_out = th3 | im_floodfill_inv
     # # ======================
 
+    """
     th33 = ndi.binary_fill_holes(th3)
     plt.subplot(2, 3, 5)
     plt.imshow(label_im, 'gray')
+    plt.title('Binary image')
     plt.axis("off")
+    """
+    #label_im_Gray = cv2.cvtColor(label_im, cv2.COLOR_)
+    nPixelsNonZero = cv2.countNonZero(label_im)
+    print('nObjectPixelsNonZero = ',nPixelsNonZero)
+    print('nAllPixels = ',label_im.shape[0] * label_im.shape[1])
+
+    for w in range(0, label_im.shape[1]):
+        label_im[0,w] = 0
+        #label_im[label_im.shape[1]-5, w] = 0
+
+
+    # velikost strukturniho elementu by nemela byt vetsi nez je 70% puvodniho objektu  (nPixelsNonZero-(nPixelsNonZero / 3))
+    kernel_size = int(np.math.sqrt((nPixelsNonZero / 8)))
+    #kernel_size = int(np.math.sqrt((nPixelsNonZero / 1.5)))
+    print("kernel_size = ",kernel_size)
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+    opening = cv2.morphologyEx(np.uint8(label_im), cv2.MORPH_CLOSE, kernel)
+
+    #kernel = np.ones((5, 5), np.uint8)
+    dilation = cv2.dilate(np.uint8(label_im), kernel, iterations=1)
+    erosion = cv2.erode(np.uint8(dilation), kernel, iterations=1)
+
+    nPixelsNonZero = cv2.countNonZero(erosion)
+    print('nObjectPixelsNonZero = ', nPixelsNonZero)
+    print('nAllPixels = ', erosion.shape[0] * erosion.shape[1])
+
+    import math
+    nVystupkuu  = math.round = lambda num, n: math.floor((nPixelsNonZero/640) * 10 ** n + 0.5) / 10 ** n
+
+    print("Pocet vystupkuu = ", round(nPixelsNonZero/640))
+
+
+    plt.subplot(2, 3, 5)
+    plt.imshow(erosion, 'gray')
+    plt.title('Binary image')
+    plt.axis("off")
+
+
+    fg = cv2.bitwise_or(im2, im2, mask=erosion)
+    x, y, width, height = cv2.boundingRect(erosion)
+    roi = fg[y:y + height, x:x + width]
+
+    roi_border = addBorder(roi, 30)
+
+    ret, thresh1 = cv2.threshold(cv2.cvtColor(roi_border, cv2.COLOR_RGB2GRAY), 1, 255, cv2.THRESH_BINARY)
+
+    stranaA, stranaB = measurSize(roi_border, thresh1)
+
+    # plt.subplot(236)
+    #plt.subplot(2,3,(3,6))
+    plt.subplot(236)
+    plt.subplots_adjust(bottom=0.015, left=0.025, top=0.988, right=0.98, wspace=0.1, hspace=0.1)
+    plt.imshow(roi_border, interpolation='nearest')
+    plt.text(0,0,"vystupky = {} (podle poctu pix.)\nkostka {}x{}".format(round(nPixelsNonZero/640),round(stranaA), round(stranaB)),fontsize=11,
+             bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3}, color='white')
+    plt.axis("off")
+    plt.savefig('images\\saveFig{}.png'.format(int(time.time())))
+
+    #roi = cv2.cvtColor(roi, cv2.COLOR_BGR2RGB)
+
+    return erosion, roi, roi_border, stranaA, stranaB
+
 
     mask_inv = cv2.bitwise_not(th3)
 
@@ -229,23 +307,125 @@ def black_or_b(im1, im2):
         cv2.drawContours(im2, [cnt], 0, (0, 255, 0), 3)
         #cv2.imshow('output', im2)
 
-    plt.subplot(236)
-    plt.imshow(cv2.cvtColor(roi, cv2.COLOR_BGR2RGB))
-    plt.axis("off")
-    plt.savefig('images\\saveFig.png')
+    # plt.subplot(236)
+    # plt.imshow(cv2.cvtColor(roi, cv2.COLOR_BGR2RGB))
+    # plt.axis("off")
+    # plt.savefig('images\\saveFig.png')
 
     return roi
 
+def measurSize(original, binImage):
+    # find contours in the edge map
+    cnts = cv2.findContours(binImage.copy(), cv2.RETR_EXTERNAL,
+                            cv2.CHAIN_APPROX_SIMPLE)
+    cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+
+    # sort the contours from left-to-right and initialize the
+    # 'pixels per metric' calibration variable
+    (cnts, _) = contours.sort_contours(cnts)
+    pixelsPerMetric = None
+
+    # loop over the contours individually
+    for c in cnts:
+        # if the contour is not sufficiently large, ignore it
+        if cv2.contourArea(c) < 100:
+            continue
+
+        # rotuje kolem objektu obdelnik, a hleda nejmensi mozny, do ktereho se cely objekt schova
+        # compute the rotated bounding box of the contour
+        box = cv2.minAreaRect(c)
+        box = cv2.cv.BoxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
+        box = np.array(box, dtype="int")
+
+        # order the points in the contour such that they appear
+        # in top-left, top-right, bottom-right, and bottom-left
+        # order, then draw the outline of the rotated bounding
+        # box
+        box = perspective.order_points(box)
+        cv2.drawContours(original, [box.astype("int")], -1, (0, 255, 0), 2)
+
+        # loop over the original points and draw them
+        for (x, y) in box:
+            cv2.circle(original, (int(x), int(y)), 5, (0, 0, 255), -1)
+
+        # unpack the ordered bounding box, then compute the midpoint
+        # between the top-left and top-right coordinates, followed by
+        # the midpoint between bottom-left and bottom-right coordinates
+        (tl, tr, br, bl) = box
+        (tltrX, tltrY) = midpoint(tl, tr)
+        (blbrX, blbrY) = midpoint(bl, br)
+
+        # compute the midpoint between the top-left and top-right points,
+        # followed by the midpoint between the top-righ and bottom-right
+        (tlblX, tlblY) = midpoint(tl, bl)
+        (trbrX, trbrY) = midpoint(tr, br)
+
+        # draw the midpoints on the image
+        cv2.circle(original, (int(tltrX), int(tltrY)), 5, (255, 0, 0), -1)
+        cv2.circle(original, (int(blbrX), int(blbrY)), 5, (255, 0, 0), -1)
+        cv2.circle(original, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
+        cv2.circle(original, (int(trbrX), int(trbrY)), 5, (255, 0, 0), -1)
+
+        # draw lines between the midpoints
+        cv2.line(original, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),
+                 (255, 0, 255), 2)
+        cv2.line(original, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
+                 (255, 0, 255), 2)
+
+        # compute the Euclidean distance between the midpoints
+        dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
+        dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+
+        # if the pixels per metric has not been initialized, then
+        # compute it as the ratio of pixels to supplied metric
+        # (in this case, inches)
+        if pixelsPerMetric is None:
+            pixelsPerMetric = dB / 8
+        print(pixelsPerMetric,' = pixelsPerMetric')
+        pixelsPerMetric = 25.2982
+        # compute the size of the object
+        dimA = dA / pixelsPerMetric
+        dimB = dB / pixelsPerMetric
+        # B je delsi
+        # A je ta kratsi strana
+        # draw the object sizes on the image
+        cv2.putText(original, "{:.1f}".format(dimA),
+                    (int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_DUPLEX,
+                    0.48, (255, 255, 255), 2)
+        cv2.putText(original, "{:.1f}".format(dimB),
+                    (int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_DUPLEX,
+                    0.48, (255, 255, 255), 2)
+
+        # show the output image
+        #cv2.imshow("Image", original)
+
+    return dimA, dimB
+
+def midpoint(ptA, ptB):
+    return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
+
+def addBorder(old_img, border_size):
+    # prida k obrazu cerby ramecek s sirkou dle libosti
+
+    # old_size = old_img.shape[0], old_img.shape[1]
+    # new_size = (old_img.shape[0] + border_size, old_img.shape[1] + border_size)
+    # new_im = Image.new("RGB", new_size, "white")  ## luckily, this is already black!
+    # new_im.paste(Image.fromarray(old_img), (int((new_size[0] - old_size[0]) / 2), int((new_size[1] - old_size[1]) / 2)))
+    new_im = np.array(ImageOps.expand(Image.fromarray(old_img), border=border_size, fill='black'))
+    return new_im
+
 def foundObjectToGray(foundObject):
-    img_gray = cv2.cvtColor(foundObject, cv2.COLOR_BGR2GRAY)
+    img_gray = cv2.cvtColor(foundObject, cv2.COLOR_RGB2GRAY)
     hist_img_gray, b = np.histogram(img_gray, 255, (1, 255))
     maxXwMY = hist_img_gray.argmax()
     maxY = max(hist_img_gray)
+    """
     plt.figure('aaaaaaa',dpi=50)
     plt.subplot(121)
     plt.imshow(img_gray, cmap='gray')
     plt.subplot(122)
     plt.imshow(cv2.cvtColor(foundObject, cv2.COLOR_BGR2RGB))
+    """
     aaa = "Max = [{0}, {1}]".format(maxXwMY, maxY)
     print(aaa)
     plt.figure('hist_img_gray')
@@ -257,6 +437,16 @@ def foundObjectToGray(foundObject):
     plt.xlabel('GRAYSCALE VALUE')
     plt.ylabel('NUMBER')
     plt.title('Histogram of grayscale image')
+
+    """ ////////////////////////////////
+    udelat hlavni figuru 3x3, misto 2x3
+        * stred diff g, hist, thresh + prah
+        *
+    Porc nefunguje nejvetsi Obj
+        zkusit na :
+        im1 = cv2.imread('Img__231116_15_22_06.bmp')
+        im2 = cv2.imread('Img__231116_15_20_29.bmp')
+    //////////////////////////////// """
 
     plt.savefig('images\\saveFig_Gray.png')
     # print(img_gray.mean())
@@ -273,7 +463,7 @@ def foundObject_hue(foundObject):
     #hist_hue_img, b = np.histogram(img_hsv[:, :, 0], 360, (0, 256))
     #hist_hue_img = histogram(img_hsv[:, :, 0], 360)
     #hist_hue_img, s, v = rgb2hsv(foundObject[:,0,0],0,0)
-    hist_hue_img = histogramHue(cv2.cvtColor(foundObject, cv2.COLOR_BGR2RGB), 360)
+    hist_hue_img = histogramHue(foundObject, 360)
 
     # cv2.imshow('hsvHrnek', img_hsv)
     maxXwhereMaxY = hist_hue_img.argmax()
@@ -306,7 +496,7 @@ def foundObject_hue(foundObject):
 
 def getTextColorFromRGB(img5):
 
-    fname = 'colors64.txt'
+    fname = 'colors343.txt'
     lines = [re.split('[=,-]+', lines.strip('\n')) for lines in open(fname)]
     for ele in lines:
         ele.append(0)  # pocitadlo nalezeni
@@ -314,30 +504,42 @@ def getTextColorFromRGB(img5):
 
     for y in range(img5.shape[0]):
         for x in range(img5.shape[1]):
-            b = img5[y][x][0]
+            r = img5[y][x][0]
             g = img5[y][x][1]
-            r = img5[y][x][2]
-            if r > 0 or g > 0 or b > 0:
+            b = img5[y][x][2]
+            #if r > 0 or g > 0 or b > 0:
+            if r + g + b > 15:
                 for a in lines:
                     #print(a)
                     if (int(a[1])+0  <= r <= int(a[2])+0) and (int(a[3])+0  <= g <= int(a[4])+0) and (int(a[5])+0  <= b <= int(a[6])+0):
                         #a[0].append('aaaaaaaaaaa')
                         a[7] += 1
+                        break
                         ##############print(r, g, b, " = ",a[0])
                         #return a[0]
 
     maxi = ['', '', '', '', '', '', '', 0]
-    for c in lines:
-        print(c[0], ' - ', c[7])
+    linesSorted = sorted(lines, key=lambda zaznam: zaznam[7])
+    for c in linesSorted:
+        if (c[7] > 0): print(c[0], ' - ', c[7])
         if c[7] > maxi[7]: maxi = c
 
     print('*****************\n',maxi,'\n*****************')
     return maxi[0]
 
+def chain_code(image_bin):
+    kernel = np.ones((3, 3), np.uint8)
+    erosion = cv2.erode(np.uint8(image_bin), kernel, iterations=1)
+
+    cv2.imshow('obrys', (image_bin*255) - (erosion*255))
+
+    return
+# ================================================================================================================
 
 #import mahotas
-foundObject = black_or_b(current_frame_gray, previous_frame_gray).astype(np.uint8)
-
+bin_image, foundObject, foundObject_border, stranaA, stranaB = black_or_b(current_frame_gray, previous_frame_gray) #.astype(np.uint8)
+#foundObject = cv2.cvtColor(foundObject, cv2.COLOR_BGR2RGB)
+# cv2.imshow('foundObject',foundObject)
 #qqq = cv2.imread('HueScale.png')
 gray = foundObjectToGray(foundObject)
 hue = foundObject_hue(foundObject)
@@ -346,17 +548,28 @@ ccc = "{0} = Gray".format(gray)
 print (bbb)
 print (ccc)
 # Write some Text
-cv2.putText(foundObject,bbb,(0,10), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
-cv2.putText(foundObject,ccc,(0,20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
+#cv2.putText(foundObject_border, bbb,(0,10), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
+#cv2.putText(foundObject_border, ccc, (0,20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
 
+# nacte soubor se zapsanymi rozsahy barev a nazvy a kazdy pixel porovna a prislusnou barvu inkreementuje
+# www = getTextColorFromRGB(foundObject)
+# print(www)
+
+# txt = "{}x{} - brick".format(round(stranaA), round(stranaB))
+# txt2 = "{} - color".format(www)
+# cv2.putText(foundObject_border, txt, (0, 13), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
+# cv2.putText(foundObject_border, txt2, (0, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
 
 ts = int(time.time())
-immmm = Image.fromarray(cv2.cvtColor(foundObject, cv2.COLOR_BGR2RGB))
+immmm = Image.fromarray(foundObject_border)
 immmm.save("images\\objectFound{}.bmp".format(ts))
 #cv2.imshow('images\\aaaaaaaaaaaaaaaa', foundObject)
 
-www = getTextColorFromRGB(foundObject)
-print(www)
+
+chain_code(bin_image)
+
+
+
 
 
 # import colorsys
