@@ -7,7 +7,7 @@ from PIL import Image
 from PIL import ImageOps
 from matplotlib import gridspec
 from scipy.misc import imread
-from scipy import ndimage as ndi
+
 import time
 import scipy.ndimage as ndimage
 import re
@@ -28,8 +28,8 @@ from decimal import *
 im1 = cv2.imread('b.bmp')
 im2 = cv2.imread('TestCV191016_14-17-57.bmp')
 
-im1 = cv2.imread('Img__231116_15_20_40.bmp')
-im2 = cv2.imread('Img__231116_15_14_01.bmp')
+im1 = cv2.imread('Img__231116_15_00_41.bmp')
+im2 = cv2.imread('Img__231116_15_00_29.bmp')
 
 
 
@@ -47,15 +47,18 @@ def histogram(im, size):
     return h
 
 def histogramHue(im, size):
+    print('-------------- histogramHue() --------------')
     h = np.zeros(size+1)
     import math
     rounded_value = 0
     for y in range(im.shape[0]):
         for x in range(im.shape[1]):
-            if(im[y,x,0] + im[y,x,1] + im[y,x,2] != 0):
+            pom=(im[y,x,0].astype(float) + im[y,x,1].astype(float) + im[y,x,2].astype(float))
+            # je tu ".astype(float)", protoze jinak "RuntimeWarning: overflow encountered in ubyte_scalars"
+            if(pom != 0):
                 hueValue, s, v = rgb2hsv(im[y,x,0], im[y,x,1], im[y,x,2])
                 # rounded_value = math.ceil(hueValue)
-                h[round(hueValue)] += 1
+                h[int(round(hueValue))] += 1
     return h
 
 def rgb2hsv(r, g, b):
@@ -82,6 +85,7 @@ def rgb2hsv(r, g, b):
     return h, s, v
 
 def black_or_b(im1, im2):
+    print('--------------- black_or_b() ---------------')
     diff = cv2.subtract(im2, im1)
     # threshold(diff, diff, 30, 255, CV_THRESH_BINARY);
     #
@@ -315,6 +319,7 @@ def black_or_b(im1, im2):
     return roi
 
 def measurSize(original, binImage):
+    print('--------------- measurSize() ---------------')
     # find contours in the edge map
     cnts = cv2.findContours(binImage.copy(), cv2.RETR_EXTERNAL,
                             cv2.CHAIN_APPROX_SIMPLE)
@@ -526,67 +531,153 @@ def getTextColorFromRGB(img5):
 
     print('*****************\n',maxi,'\n*****************')
     return maxi[0]
+def chain_median(chain2, sizeStrucElement):
+    #print(sizeStrucElement / 2)
+    #print(int(sizeStrucElement / 2))
+    chain3=[]
+    halfElement = int(sizeStrucElement / 2)
+    for i in range(len(chain2)):
+        #print(np.median(chain2[i-halfElement : i+halfElement]))
+        l = i - halfElement
+        r = i + halfElement
+        if l < 0: l=0
+        if r > len(chain2): r =len(chain2)
+        newVal=(np.median(chain2[l : r]))
+        chain3.append(int(newVal))
+
+    return chain3
 
 def chain_code(image_bin):
+    print('--------------- chain_code() ---------------')
     kernel = np.ones((3, 3), np.uint8)
     erosion = cv2.erode(np.uint8(image_bin), kernel, iterations=1)
 
-    cv2.imshow('obrys', (image_bin*255) - (erosion*255))
+    image_contour = (image_bin) - (erosion)
+    plt.figure()
+    plt.imshow(image_contour, cmap='gray')
 
-    return
+    # najde souradnice prvni jednicky binarniho obrazu, na kterou narazi. Nasledne ze smycek vyskoci
+    class Found(Exception): pass
+    try:
+        for y in range(image_contour.shape[0]):
+            for x in range(image_contour.shape[1]):
+                if image_contour[y][x] == 1:
+                    raise Found
+    except Found:
+        start_point = (y, x)
+
+    image_contour2 = image_contour.copy()
+
+    chain = []
+    print(start_point)
+    while True:
+        # print((y, x))
+        image_contour2[y, x] = 0
+        subImg = np.array([image_contour2[y - 1, x - 1], image_contour2[y - 1, x], image_contour2[y - 1, x + 1],
+                           image_contour2[y, x - 1],     image_contour2[y, x],     image_contour2[y, x + 1],
+                           image_contour2[y + 1, x - 1], image_contour2[y + 1, x], image_contour2[y + 1, x + 1]])
+        #print(subImg)
+
+        directions = np.array([0, 1, 2,
+                               7, 0, 3,
+                               6, 5, 4])
+        directions2 = np.array([1, 2, 3,
+                                8, 0, 4,
+                                7, 6, 5])
+        #print(directions)
+        aaa = subImg * directions2
+        m = max(aaa)
+        if m == 1: y -= 1; x -= 1
+        elif m==2: y -= 1
+        elif m==3: y -= 1; x += 1
+        elif m==4: x += 1
+        elif m==5: y += 1; x += 1
+        elif m==6: y += 1
+        elif m==7: y += 1; x -= 1
+        elif m==8: x -= 1
+        elif m==0: break
+        if (start_point == (y, x)): break
+
+        chain.append(m-1)
+
+        cv2.circle(image_contour, (x-20, y-20), 1, (255, 255, 0), 1)
+
+    print(chain)
+    chain2 = chain_median(chain, 10)
+    print(chain2,'\n------')
+
+    # zredukuje po sobe jdouci strejna cisla na jedno
+    # zip prochazi 2 pole zaroven; zde je tedy v x[0] hodnota prvniho pole a v x[1] druheho
+    """
+    alist = ['a1', 'a2', 'a3']
+    blist = ['b1', 'b2', 'b3']
+
+    for i, (a, b) in enumerate(zip(alist, blist)):
+        print i, a, b
+    >>> 0 a1 b1
+        1 a2 b2
+        2 a3 b3
+    """
+    chain3 = np.hstack([chain2[0], [x[0] for x in zip(chain2[1:], chain2[:-1]) if x[0]!=x[1]]])
+
+    # print(np.hstack([chain[0], [x[0] for x in zip(chain[1:], chain[:-1]) if x[0]!=x[1]]]))
+    print(chain3)
+
+
+    return chain
 # ================================================================================================================
+if __name__ == '__main__':
+    #import mahotas
+    bin_image, foundObject, foundObject_border, stranaA, stranaB = black_or_b(current_frame_gray, previous_frame_gray) #.astype(np.uint8)
+    #foundObject = cv2.cvtColor(foundObject, cv2.COLOR_BGR2RGB)
+    # cv2.imshow('foundObject',foundObject)
+    #qqq = cv2.imread('HueScale.png')
+    gray = foundObjectToGray(foundObject)
+    hue = foundObject_hue(foundObject)
+    bbb = "{0} = Hue".format(round(hue))
+    ccc = "{0} = Gray".format(gray)
+    print (bbb)
+    print (ccc)
+    # Write some Text
+    #cv2.putText(foundObject_border, bbb,(0,10), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
+    #cv2.putText(foundObject_border, ccc, (0,20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
 
-#import mahotas
-bin_image, foundObject, foundObject_border, stranaA, stranaB = black_or_b(current_frame_gray, previous_frame_gray) #.astype(np.uint8)
-#foundObject = cv2.cvtColor(foundObject, cv2.COLOR_BGR2RGB)
-# cv2.imshow('foundObject',foundObject)
-#qqq = cv2.imread('HueScale.png')
-gray = foundObjectToGray(foundObject)
-hue = foundObject_hue(foundObject)
-bbb = "{0} = Hue".format(round(hue))
-ccc = "{0} = Gray".format(gray)
-print (bbb)
-print (ccc)
-# Write some Text
-#cv2.putText(foundObject_border, bbb,(0,10), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
-#cv2.putText(foundObject_border, ccc, (0,20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
+    # nacte soubor se zapsanymi rozsahy barev a nazvy a kazdy pixel porovna a prislusnou barvu inkreementuje
+    # www = getTextColorFromRGB(foundObject)
+    # print(www)
 
-# nacte soubor se zapsanymi rozsahy barev a nazvy a kazdy pixel porovna a prislusnou barvu inkreementuje
-# www = getTextColorFromRGB(foundObject)
-# print(www)
+    # txt = "{}x{} - brick".format(round(stranaA), round(stranaB))
+    # txt2 = "{} - color".format(www)
+    # cv2.putText(foundObject_border, txt, (0, 13), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
+    # cv2.putText(foundObject_border, txt2, (0, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
 
-# txt = "{}x{} - brick".format(round(stranaA), round(stranaB))
-# txt2 = "{} - color".format(www)
-# cv2.putText(foundObject_border, txt, (0, 13), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
-# cv2.putText(foundObject_border, txt2, (0, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
-
-ts = int(time.time())
-immmm = Image.fromarray(foundObject_border)
-immmm.save("images\\objectFound{}.bmp".format(ts))
-#cv2.imshow('images\\aaaaaaaaaaaaaaaa', foundObject)
-
-
-chain_code(bin_image)
+    ts = int(time.time())
+    immmm = Image.fromarray(foundObject_border)
+    immmm.save("images\\objectFound{}.bmp".format(ts))
+    #cv2.imshow('images\\aaaaaaaaaaaaaaaa', foundObject)
 
 
+    chain_code(bin_image)
 
 
 
-# import colorsys
-# r, g, b = 0, 0, 255
-# h, l, s = colorsys.rgb_to_hls(r, g, b)
-# r, g, b = colorsys.hls_to_rgb(h, l, s)
-# h, l, s = rgb2hsv(r, g, b)
-# print (r, g, b)
-# print (h, l, s)
 
 
-# print(img_gray[:,:,0].mean())
-# print(img_gray.mean())
-# print(img_gray.max(axis=0))
-# print(np.argwhere(img_gray == img_gray.max()))
-# print(img_gray.argmax())
+    # import colorsys
+    # r, g, b = 0, 0, 255
+    # h, l, s = colorsys.rgb_to_hls(r, g, b)
+    # r, g, b = colorsys.hls_to_rgb(h, l, s)
+    # h, l, s = rgb2hsv(r, g, b)
+    # print (r, g, b)
+    # print (h, l, s)
+
+
+    # print(img_gray[:,:,0].mean())
+    # print(img_gray.mean())
+    # print(img_gray.max(axis=0))
+    # print(np.argwhere(img_gray == img_gray.max()))
+    # print(img_gray.argmax())
 
 
 
-plt.show()
+    plt.show()
