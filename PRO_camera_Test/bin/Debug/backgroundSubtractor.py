@@ -14,6 +14,8 @@ import re
 from imutils import perspective
 from imutils import contours
 from scipy.spatial import distance as dist
+import glob
+
 
 from decimal import *
 #im1 = cv2.imread('images\\background.bmp')
@@ -24,19 +26,18 @@ from decimal import *
 
 # im1 = cv2.imread('images\\imageOfBackground.bmp')
 # im2 = cv2.imread('images\\imageOfPadWithObject.bmp')
-
-im1 = cv2.imread('b.bmp')
-im2 = cv2.imread('TestCV191016_14-17-57.bmp')
-
-im1 = cv2.imread('Img__231116_15_00_41.bmp')
-im2 = cv2.imread('Img__231116_15_00_29.bmp')
-
-
-
-current_frame_gray = cv2.cvtColor(im1, cv2.COLOR_BGR2RGB)
-previous_frame_gray = cv2.cvtColor(im2, cv2.COLOR_BGR2RGB)
-
-frame_diff = cv2.absdiff(im1, im2)
+# #*************************************************************************************
+# im1 = cv2.imread('b.bmp')
+# im2 = cv2.imread('TestCV191016_14-17-57.bmp')
+#
+# im1 = cv2.imread('Img__231116_15_00_41.bmp')
+# im2 = cv2.imread('Img__231116_14_59_53.bmp')
+#
+# current_frame_gray = cv2.cvtColor(im1, cv2.COLOR_BGR2RGB)
+# previous_frame_gray = cv2.cvtColor(im2, cv2.COLOR_BGR2RGB)
+#
+# frame_diff = cv2.absdiff(im1, im2)
+# #*************************************************************************************
 
 #cv2.imshow('frame diff ', frame_diff)
 def histogram(im, size):
@@ -92,27 +93,52 @@ def black_or_b(im1, im2):
     # cv2.Dilate(diff, diff, None, 18)  # to get object blobs
     # cv2.Erode(diff, diff, None, 10)
 
-    plt.subplot(2,3,1)
+    '''
+    plt.subplot(4,4,1)
     plt.imshow(im1)
     plt.title('Background')
     plt.axis("off")
-    plt.subplot(2,3,2)
+    plt.subplot(4,4,2)
     plt.imshow(im2)
     plt.title('Original image')
     plt.axis("off")
-    plt.subplot(2,3,3)
+    plt.subplot(4,4,3)
     plt.imshow(diff)
     plt.title('Diff')
     plt.axis("off")
-
+    '''
+    # plt.imshow(im1), plt.title('aaaaaaaaaa'), plt.axis('off')
+    # plt.imshow(im1), plt.title('aaaaaaaaaa'), plt.axis('off')
+    # ax1 = plt.imshow(im1), plt.title('aaaaaaaaaa'), plt.axis('off')
+    ax1.imshow(im1)
+    ax1.set_axis_off()
+    ax1.set_title('Background')
+    ax1.set_ylim(ymax=0)
+    ax1.set_xlim(xmin=0)
+    ax2.imshow(im2)
+    ax2.set_title('Original image')
+    ax2.set_axis_off()
+    ax2.set_adjustable('box-forced')
+    ax3.imshow(diff, origin='upper', aspect='auto')
+    ax3.set_title('Diff')
+    ax3.axis("off")
+    ax3.set_adjustable('box-forced')
     #img555 = cv2.medianBlur(diff, 5)
     img555 = cv2.cvtColor(diff, cv2.COLOR_RGB2GRAY)
     #cv2.imshow("img555",img555)
 
-    plt.subplot(234)
+    '''
+    plt.subplot(444)
     plt.imshow(img555, cmap='gray')
     plt.title('Diff gray')
     plt.axis("off")
+    '''
+    # ax4.subplot(444)
+    ax4.imshow(img555, cmap='gray', origin='upper', interpolation='nearest')
+    ax4.set_title('Diff gray')
+    ax4.axis("off")
+    ax4.autoscale(False)
+    # plt.axis("off")
 
     #
     # h = histogram(diff)
@@ -123,7 +149,14 @@ def black_or_b(im1, im2):
     threshold, th3 = cv2.threshold(img555, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)   #automaticky se vybere vhodny prah na zaklade hist, ktery se take zjisti sam
     print ("Auto threshold = {}".format(threshold))
     cv2.imshow('{} = auto threshold'.format(threshold),th3)
+    # plt.subplot(445)
+    # plt.imshow(th3, cmap='gray')
+    # plt.title('Auto threshold = {}'.format(threshold))
+    # plt.axis("off")
 
+    ax5.imshow(th3, cmap='gray')
+    ax5.set_title('Auto threshold = {}'.format(threshold))
+    ax5.axis("off")
 
     """
     immmm = Image.fromarray(th3)
@@ -233,35 +266,45 @@ def black_or_b(im1, im2):
     print("Pocet vystupkuu = ", round(nPixelsNonZero/640))
 
 
-    plt.subplot(2, 3, 5)
-    plt.imshow(erosion, 'gray')
-    plt.title('Binary image')
-    plt.axis("off")
+    # plt.subplot(4, 4, 6)
+    # plt.imshow(erosion, 'gray')
+    # plt.title('Binary image')
+    # plt.axis("off")
+    #
+    ax6.imshow(erosion, 'gray')
+    ax6.set_title('Binary image')
+    ax6.axis("off")
 
 
     fg = cv2.bitwise_or(im2, im2, mask=erosion)
     x, y, width, height = cv2.boundingRect(erosion)
     roi = fg[y:y + height, x:x + width]
-
+    cv2.imshow('roi', roi)
     roi_border = addBorder(roi, 30)
-
-    ret, thresh1 = cv2.threshold(cv2.cvtColor(roi_border, cv2.COLOR_RGB2GRAY), 1, 255, cv2.THRESH_BINARY)
-
-    stranaA, stranaB = measurSize(roi_border, thresh1)
+    cv2.imshow('erosion', erosion*255)
+    cv2.imshow('roi_border', roi_border)
+    ret, binary_border = cv2.threshold(cv2.cvtColor(roi_border, cv2.COLOR_RGB2GRAY), 1, 255, cv2.THRESH_BINARY)
+    # cv2.imshow('tre',thresh1)
+    stranaA, stranaB, angle = measurSize(roi_border, binary_border)
 
     # plt.subplot(236)
     #plt.subplot(2,3,(3,6))
-    plt.subplot(236)
-    plt.subplots_adjust(bottom=0.015, left=0.025, top=0.988, right=0.98, wspace=0.1, hspace=0.1)
-    plt.imshow(roi_border, interpolation='nearest')
-    plt.text(0,0,"vystupky = {} (podle poctu pix.)\nkostka {}x{}".format(round(nPixelsNonZero/640),round(stranaA), round(stranaB)),fontsize=11,
-             bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3}, color='white')
-    plt.axis("off")
-    plt.savefig('images\\saveFig{}.png'.format(int(time.time())))
-
+    # plt.subplot(4,4,(11,16))
+    # #plt.subplots_adjust(bottom=0.015, left=0.025, top=0.988, right=0.98, wspace=0.1, hspace=0.1)
+    # plt.imshow(roi_border, interpolation='nearest')
+    # plt.text(0,0,"vystupky = {} (podle poctu pix.)\nkostka {}x{}".format(round(nPixelsNonZero/640),round(stranaA), round(stranaB)),fontsize=11,
+    #          bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3}, color='white')
+    # plt.axis("off")
+    ##################### plt.savefig('images\\saveFig{}.png'.format(int(time.time())))
+    print(pathToFigFolder.__add__('\\saveFig{}.png'.format(int(time.time()))))
+    # plt.savefig(pathToFigFolder.__add__('\\saveFig{}.png'.format(imageNumber)))
     #roi = cv2.cvtColor(roi, cv2.COLOR_BGR2RGB)
-
-    return erosion, roi, roi_border, stranaA, stranaB
+    ax16 = plt.subplot2grid((4, 4), (2, 2), rowspan=2, colspan=2)
+    ax16.imshow(roi_border, interpolation='nearest')
+    ax16.axis("off")
+    # -----------------------------------------------------------------------------
+    return binary_border,erosion, roi, roi_border, stranaA, stranaB, angle
+    # *****************************************************************************
 
 
     mask_inv = cv2.bitwise_not(th3)
@@ -381,6 +424,11 @@ def measurSize(original, binImage):
         dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
         dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
 
+        # vezme nalezene body, ktere jsou stredy stran obdelniku (primka mezi nimi je ta dalsi) a
+        # zmeri uhel
+        angle = (angle_between(tlblX, tlblY, trbrX, trbrY))
+
+
         # if the pixels per metric has not been initialized, then
         # compute it as the ratio of pixels to supplied metric
         # (in this case, inches)
@@ -402,12 +450,75 @@ def measurSize(original, binImage):
                     0.48, (255, 255, 255), 2)
 
         # show the output image
-        #cv2.imshow("Image", original)
+    # cv2.imshow("Image1", rotate_image(original, angle))
 
-    return dimA, dimB
+    # rotate_image(original, angle)
+
+    return dimA, dimB, angle
+
+
+'''
+73.57460499009913
+253.57460499009915
+343.57460499
+73.57460499009913
+73.57460499009913
+34.87532834460219
+34.87532834460219
+124.875328345
+-145.12467165539783
+-145.12467165539783
+58.20792846277911
+238.2079284627791
+328.207928463
+58.20792846277911
+58.20792846277911
+73.57460499009913
+253.57460499009915
+343.57460499
+73.57460499009913
+73.57460499009913
+'''
 
 def midpoint(ptA, ptB):
     return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
+
+def angle_between(x1, y1, x2, y2):
+    #x1=2; y1=5; x2=7; y2=3
+    # Compute x/y distance
+    (dx, dy) = (x1-x2, y1-y2)
+    # Compute the angle
+    try:
+        angle = np.math.atan(float(dx) / float(dy))
+    except ZeroDivisionError:
+        print ("division by zero!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        angle = 0
+    # The angle is in radians (-pi/2 to +pi/2).  If you want degrees, you need the following line
+    angle *= 180 / np.math.pi
+    # Now you have an angle from -90 to +90.  But if the player is below the turret,
+    # you want to flip it
+    print(angle)
+    if dy < 0:
+        angle += 180
+    print(angle)
+
+    dx = x2 - x1
+    dy = y2 - y1
+    rads = np.math.atan2(-dy, dx)
+    rads %= 2 * np.math.pi
+    degs = np.degrees(rads)
+    print(degs)
+
+    angle_rad = np.math.atan2(dx, dy)
+    angle_deg = angle_rad * 180.0 / np.math.pi
+    print(angle_deg)
+
+    angle_deg = np.math.atan2(y1-y2, x2-x1) * ( 180.0 / np.math.pi)
+
+    print('angle_deg = ', angle_deg*(-1))
+    #if angle_deg < 0: angle_deg+=180
+    #print('angle_deg = ', angle_deg)
+    return angle_deg*(-1)
 
 def addBorder(old_img, border_size):
     # prida k obrazu cerby ramecek s sirkou dle libosti
@@ -418,6 +529,16 @@ def addBorder(old_img, border_size):
     # new_im.paste(Image.fromarray(old_img), (int((new_size[0] - old_size[0]) / 2), int((new_size[1] - old_size[1]) / 2)))
     new_im = np.array(ImageOps.expand(Image.fromarray(old_img), border=border_size, fill='black'))
     return new_im
+
+def rotate_image(image, angle):
+    center= ndimage.measurements.center_of_mass(image)
+    print('center = ',center)
+    row = image.shape[0]
+    col = image.shape[1]
+    # center=tuple(np.array([row,col])/2)
+    rot_mat = cv2.getRotationMatrix2D(center,angle,1)
+    new_image = cv2.warpAffine(image, rot_mat, (col,row))
+    return new_image
 
 def foundObjectToGray(foundObject):
     img_gray = cv2.cvtColor(foundObject, cv2.COLOR_RGB2GRAY)
@@ -491,11 +612,10 @@ def foundObject_hue(foundObject):
     plt.xlabel('HUE VALUE')
     plt.ylabel('NUMBER')
 
-    plt.savefig('images\\saveFig_Hue.png')
     # print(img_hsv[:, :, 0].mean())
     # print(hist_hue_img.mean())
     # print(hist_hue_img.max(axis=0))
-    # print(np.argwhere(hist_hue_img == hist_hue_img.max()))
+    # print(np.savefig('images\\saveFig_Hue.png').argwhere(hist_hue_img == hist_hue_img.max()))
     print("hist_hue_img.argmax() = ",hist_hue_img.argmax())
     return maxXwhereMaxY
 
@@ -546,33 +666,83 @@ def chain_median(chain2, sizeStrucElement):
         chain3.append(int(newVal))
 
     return chain3
+def get_img_contour(image_bin):
+    image_bin = addBorder(image_bin, 30)
+    kernel = np.ones((3, 3), np.uint8)
+    kernel2 = np.ones((20, 20), np.uint8)
+    # protoze po rotaci obrazu zustavaji na krajich dirky a nepresnosti, jeste se pred vytvorenim obrysu hrany vyhladi
+    close = cv2.morphologyEx(np.uint8(image_bin), cv2.MORPH_CLOSE, kernel2)
+    erosion = cv2.erode(np.uint8(close), kernel, iterations=1)
+    image_contour = (close) - (erosion)
+    return image_contour
+
+def reduce_chain_code(chain):
+    chain_final=[]
+    pom2=True
+    nVetrelcu=5 # pocet po sobe jdoucich cisel takovych, kteri jeste nreprezentuji hranu a jsou tudis na obtiz
+    for i in range(1, len(chain)-1):
+        pom=chain[i-1]; j=0; counter = 0
+        while counter != nVetrelcu and i != len(chain)-1:
+            counter += 1; i+=1
+            if pom != chain[i]: pom2=False
+            else: pom2=True
+        if pom2==True: chain_final.append(chain[i])
+
+    print(chain_final)
+    chain_final = np.hstack([chain_final[0], [x[0] for x in zip(chain_final[1:], chain_final[:-1]) if x[0] != x[1]]])
+
+    return chain_final
+
 
 def chain_code(image_bin):
     print('--------------- chain_code() ---------------')
-    kernel = np.ones((3, 3), np.uint8)
-    erosion = cv2.erode(np.uint8(image_bin), kernel, iterations=1)
+    # protoze po rotaci obrazu zustavaji na krajich dirky a nepresnosti, jeste se pred vytvorenim obrysu hrany vyhladi
+    image_contour = get_img_contour(image_bin)
 
-    image_contour = (image_bin) - (erosion)
-    plt.figure()
+    # plt.figure()
+    # plt.subplot(4,4,8)
+    # plt.imshow(image_contour, cmap='gray')
+
+    ax8.imshow(image_contour, cmap='gray') # , extent=[0,w,h,0], aspect='auto'
+    # ax8.set_adjustable('box-forced')
+    ax8.set_title('image_contour')
+    ax8.set_axis_off()
+
+    plt.figure(7)
+    plt.subplot(133)
     plt.imshow(image_contour, cmap='gray')
+    plt.axis('off')
+
+    chain = []; m=10
 
     # najde souradnice prvni jednicky binarniho obrazu, na kterou narazi. Nasledne ze smycek vyskoci
     class Found(Exception): pass
     try:
         for y in range(image_contour.shape[0]):
             for x in range(image_contour.shape[1]):
-                if image_contour[y][x] == 1:
+                if image_contour[y][x] > 0:
                     raise Found
     except Found:
         start_point = (y, x)
+    if image_contour[y][x] == 1: print('OK')
+    elif image_contour[y][x] == 255:
+        image_contour=image_contour/255
+        print('OK 2 (255)')
+    elif image_contour[y][x] != 0:
+        image_contour = image_contour / 255
+        print('OK 3 (gray)')
+    else:
+        print('Neni binarni img v chain_code()!!!')
+        return
 
     image_contour2 = image_contour.copy()
 
-    chain = []
     print(start_point)
+    print('start_point on (y, x) =', start_point)
     while True:
         # print((y, x))
         image_contour2[y, x] = 0
+        image_contour[y, x] = 0
         subImg = np.array([image_contour2[y - 1, x - 1], image_contour2[y - 1, x], image_contour2[y - 1, x + 1],
                            image_contour2[y, x - 1],     image_contour2[y, x],     image_contour2[y, x + 1],
                            image_contour2[y + 1, x - 1], image_contour2[y + 1, x], image_contour2[y + 1, x + 1]])
@@ -584,9 +754,25 @@ def chain_code(image_bin):
         directions2 = np.array([1, 2, 3,
                                 8, 0, 4,
                                 7, 6, 5])
-        #print(directions)
+
+        # image_contour2[y - 1, x - 1]= image_contour2[y - 1, x]= image_contour2[y - 1, x + 1]= \
+        # image_contour2[y, x - 1]= image_contour2[y, x]= image_contour2[y, x + 1]=\
+        # image_contour2[y + 1, x - 1]= image_contour2[y + 1, x]= image_contour2[y + 1, x + 1] = 0
+
         aaa = subImg * directions2
+        m_old=m
         m = max(aaa)
+        # print('(y, x) =', (y, x) )
+        # print(aaa)
+        # print(m_old, m)
+        # if (m_old in aaa): m=m_old
+        # if (m==8) and (m_old==4):m=4
+
+
+        if 2 in aaa: m=2
+        if 4 in aaa: m=4
+        if 6 in aaa: m=6
+        if 8 in aaa: m=8
         if m == 1: y -= 1; x -= 1
         elif m==2: y -= 1
         elif m==3: y -= 1; x += 1
@@ -595,12 +781,19 @@ def chain_code(image_bin):
         elif m==6: y += 1
         elif m==7: y += 1; x -= 1
         elif m==8: x -= 1
-        elif m==0: break
-        if (start_point == (y, x)): break
+        elif m==0:
+            print('m==0 => end on (y, x) =', (y, x))
+            break
+        if (start_point == (y, x)):
+            print('end on (y, x) =', (y, x))
+            break
 
         chain.append(m-1)
 
-        cv2.circle(image_contour, (x-20, y-20), 1, (255, 255, 0), 1)
+        image_contour[y, x] = 0
+
+        # pro ilustraci, kde prochazeni hrany zkolabovalo, se do obrazu vykresluje kousek vedle cesta, kudy se proslo obrysem
+        cv2.circle(image_contour, (x - 20, y - 20), 1, (255, 255, 0), 1)
 
     print(chain)
     chain2 = chain_median(chain, 10)
@@ -618,49 +811,248 @@ def chain_code(image_bin):
         1 a2 b2
         2 a3 b3
     """
-    chain3 = np.hstack([chain2[0], [x[0] for x in zip(chain2[1:], chain2[:-1]) if x[0]!=x[1]]])
 
-    # print(np.hstack([chain[0], [x[0] for x in zip(chain[1:], chain[:-1]) if x[0]!=x[1]]]))
-    print(chain3)
-
-
-    return chain
+    chain_final = reduce_chain_code(chain2)
+    if chain_final[0] == chain_final[len(chain_final) - 1]:
+        index = [0]
+        chain_final = np.delete(chain_final, index)
+    print('chain_final = ', chain_final)
+    return chain_final
 # ================================================================================================================
 if __name__ == '__main__':
-    #import mahotas
-    bin_image, foundObject, foundObject_border, stranaA, stranaB = black_or_b(current_frame_gray, previous_frame_gray) #.astype(np.uint8)
-    #foundObject = cv2.cvtColor(foundObject, cv2.COLOR_BGR2RGB)
-    # cv2.imshow('foundObject',foundObject)
-    #qqq = cv2.imread('HueScale.png')
-    gray = foundObjectToGray(foundObject)
-    hue = foundObject_hue(foundObject)
-    bbb = "{0} = Hue".format(round(hue))
-    ccc = "{0} = Gray".format(gray)
-    print (bbb)
-    print (ccc)
-    # Write some Text
-    #cv2.putText(foundObject_border, bbb,(0,10), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
-    #cv2.putText(foundObject_border, ccc, (0,20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
 
-    # nacte soubor se zapsanymi rozsahy barev a nazvy a kazdy pixel porovna a prislusnou barvu inkreementuje
-    # www = getTextColorFromRGB(foundObject)
-    # print(www)
+    '''
+    pokud budu delat davky:
+        * premazavat puvodni figury
+        * predelat figury na figury 3x3 a pridat vice informaci
+            ** lepe na 4, 2, 2, 1 - v tom poslednim dvojnasobnem vsechny zjistene informace
+        * umoznit i vice skupin testovacich slozek najednou a figury na centralni misto
+        * pocitat procento uspesnosti (asi bude nekde ulozeno info o kazdem obr (treba v jeho nazvu - 2x6 atd))
+    '''
 
-    # txt = "{}x{} - brick".format(round(stranaA), round(stranaB))
-    # txt2 = "{} - color".format(www)
-    # cv2.putText(foundObject_border, txt, (0, 13), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
-    # cv2.putText(foundObject_border, txt2, (0, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
+    rezim = True
 
-    ts = int(time.time())
-    immmm = Image.fromarray(foundObject_border)
-    immmm.save("images\\objectFound{}.bmp".format(ts))
-    #cv2.imshow('images\\aaaaaaaaaaaaaaaa', foundObject)
+    if rezim == False:
 
+        figure, ((ax1, ax2, ax3, ax4), (ax5, ax6, ax7, ax8), (ax9, ax10, ax16, ax16), (ax12, ax13, ax16, ax16)) = plt.subplots(4, 4, \
+            sharex=True, sharey=True, dpi=100, linewidth=2.0, frameon=True)
+        # figure.subplots_adjust(bottom=0.015, left=0.025, top=0.988, right=0.98, wspace=0.05, hspace=0.05)
 
-    chain_code(bin_image)
+        figure.subplots_adjust(hspace = 0.03, wspace = 0.05)
+        imageNumber = 0
+        pathToFigFolder = 'test_group_12'
+        im1 = cv2.imread(pathToFigFolder.__add__('/b.bmp'))
+        im2 = cv2.imread(pathToFigFolder.__add__('/Img__231116_14_55_24.bmp'))
+        h, w, _c = im2.shape
+        print('h, w = ',h, w)
+        current_frame_gray = cv2.cvtColor(im1, cv2.COLOR_BGR2RGB)
+        previous_frame_gray = cv2.cvtColor(im2, cv2.COLOR_BGR2RGB)
 
+        frame_diff = cv2.absdiff(im1, im2)
+        # *************************************************************************************
 
 
+        # import mahotas
+        bin_image_cropped, bin_image, foundObject, foundObject_border, stranaA, stranaB, angle = black_or_b(current_frame_gray,
+                                                                                         previous_frame_gray)  # .astype(np.uint8)
+        # foundObject = cv2.cvtColor(foundObject, cv2.COLOR_BGR2RGB)
+        # print('stranaA = ',stranaA)
+        # print('stranaB = ',stranaB)
+        # print('border = ',(stranaB*25)/2)
+        # cv2.imshow('bin_image_cropped', bin_image_cropped)
+        bin_image_cropped = addBorder(bin_image_cropped,int((stranaB * 25) / 2))/255
+        # cv2.imshow('bin_image_cropped_border', bin_image_cropped)
+        # cv2.imshow('bin_image',bin_image)
+        # cv2.imshow('foundObject',foundObject)
+        # cv2.imshow('foundObject_border',foundObject_border)
+        # cv2.imshow('binary_border',binary_border)
+        # qqq = cv2.imread('HueScale.png')
+        ###########gray = foundObjectToGray(foundObject)
+        ###########hue = foundObject_hue(foundObject)
+
+        ###########bbb = "{0} = Hue".format(round(hue))
+        ###########ccc = "{0} = Gray".format(gray)
+        ###########print(bbb)
+        ###########rint(ccc)
+        # Write some Text
+        # cv2.putText(foundObject_border, bbb,(0,10), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
+        # cv2.putText(foundObject_border, ccc, (0,20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
+
+        # nacte soubor se zapsanymi rozsahy barev a nazvy a kazdy pixel porovna a prislusnou barvu inkreementuje
+        # www = getTextColorFromRGB(foundObject)
+        # print(www)
+
+        # txt = "{}x{} - brick".format(round(stranaA), round(stranaB))
+        # txt2 = "{} - color".format(www)
+        # cv2.putText(foundObject_border, txt, (0, 13), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
+        # cv2.putText(foundObject_border, txt2, (0, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
+
+        ts = int(time.time())
+        immmm = Image.fromarray(foundObject_border)
+        immmm.save("images\\objectFound{}.bmp".format(ts))
+        # cv2.imshow('images\\aaaaaaaaaaaaaaaa', foundObject)
+
+        kernel2 = np.ones((20, 20), np.uint8)
+        # protoze po rotaci obrazu zustavaji na krajich dirky a nepresnosti, jeste se pred vytvorenim obrysu hrany vyhladi
+        bin_image = cv2.morphologyEx(np.uint8(bin_image), cv2.MORPH_CLOSE, kernel2)
+        bin_image_cropped = cv2.morphologyEx(np.uint8(bin_image_cropped), cv2.MORPH_CLOSE, kernel2)
+        print('angle = ',angle)
+        rotated_bin_img = rotate_image(bin_image_cropped, angle)
+
+        rotated_bin_img = cv2.morphologyEx(np.uint8(rotated_bin_img), cv2.MORPH_CLOSE, kernel2)
+        rotated_bin_img = cv2.morphologyEx(np.uint8(rotated_bin_img), cv2.MORPH_OPEN, kernel2)
+
+        plt.figure(7, figsize=(16,5))
+        plt.figure(7).subplots_adjust(bottom=0.015, left=0.025, top=0.91, right=0.98,hspace = 0.03, wspace = 0.05)
+        plt.subplot(131)
+        plt.title("binary image")
+        plt.imshow(bin_image, cmap='gray')
+        plt.axis('off')
+
+        #plt.figure(7).subplots_adjust(bottom=0.015, left=0.025, top=0.988, right=0.98,hspace = 0.03, wspace = 0.05)
+        plt.figure(7, sharex=True, sharey=True)
+        plt.subplot(132)
+        plt.title("angle = {:.1f}".format(angle))
+        plt.imshow(rotated_bin_img, cmap='gray')
+        plt.axis('off')
+
+
+        ax7.imshow(rotated_bin_img, cmap='gray') #  extent=[0,w,h,0], aspect='auto'
+        ax7.set_title("Rotated Img")
+        ax7.axis("off")
+        # ax7.set_adjustable('box-forced')
+        chain_code_final = chain_code(rotated_bin_img)
+        plt.figure(7)
+        plt.subplot(133)
+        if chain_code_final is not None: plt.title("chain code = ".__add__(np.array_str(chain_code_final)))
+        else: plt.title("chain code = ".__add__('ERROR - Neni binarni img v chain_code()!'))
+
+        plt.figure(7).savefig(pathToFigFolder.__add__('\\saveFig{}ChainCode.png'.format(imageNumber)))
+        figure.savefig(pathToFigFolder.__add__('\\saveFig{}.png'.format(imageNumber)))
+        plt.show()
+
+
+    if rezim == True:
+
+        figure, (
+        (ax1, ax2, ax3, ax4), (ax5, ax6, ax7, ax8), (ax9, ax10, ax16, ax16), (ax12, ax13, ax16, ax16)) = plt.subplots(4, 4, sharex=True, sharey=True, dpi=100, linewidth=2.0, frameon=True)
+        # figure.subplots_adjust(bottom=0.015, left=0.025, top=0.988, right=0.98, wspace=0.05, hspace=0.05)
+
+        figure.subplots_adjust(hspace=0.03, wspace=0.05)
+        imageNumber = 0
+        pathToFigFolder = 'test_group_5'
+
+        cv_img = []
+        for img in glob.glob(pathToFigFolder.__add__("/*.bmp")):
+            if img.endswith('b.bmp'): im1 = cv2.imread(img)
+            else: cv_img.append(cv2.imread(img))
+
+        if im1 is not None:
+            imageNumber = 0
+            for im2 in cv_img:
+                figure, (
+                    (ax1, ax2, ax3, ax4), (ax5, ax6, ax7, ax8), (ax9, ax10, ax16, ax16),
+                    (ax12, ax13, ax16, ax16)) = plt.subplots(4, 4, sharex=True, sharey=True, dpi=100, linewidth=2.0,
+                                                             frameon=True)
+                figure.subplots_adjust(hspace=0.03, wspace=0.05)
+                imageNumber += 1
+                print('\n=================== Image ',imageNumber,'/',len(cv_img),' ========================\n')
+                #plt.close()
+                cv2.destroyAllWindows()
+                # *************************************************************************************
+                # im1 = cv2.imread('b.bmp')
+                # im2 = cv2.imread('TestCV191016_14-17-57.bmp')
+                #
+                # im1 = cv2.imread('Img__231116_15_00_41.bmp')
+                # im2 = cv2.imread('Img__231116_14_59_53.bmp')
+
+                current_frame_gray = cv2.cvtColor(im1, cv2.COLOR_BGR2RGB)
+                previous_frame_gray = cv2.cvtColor(im2, cv2.COLOR_BGR2RGB)
+
+                frame_diff = cv2.absdiff(im1, im2)
+                # *************************************************************************************
+
+
+                #import mahotas
+                bin_image_cropped, bin_image, foundObject, foundObject_border, stranaA, stranaB, angle = black_or_b(current_frame_gray, previous_frame_gray) #.astype(np.uint8)
+                # foundObject = cv2.cvtColor(foundObject, cv2.COLOR_BGR2RGB)
+                # print('stranaA = ',stranaA)
+                # print('stranaB = ',stranaB)
+                # print('border = ',(stranaB*25)/2)
+                # cv2.imshow('bin_image_cropped', bin_image_cropped)
+                bin_image_cropped = addBorder(bin_image_cropped, int((stranaB * 25) / 2)) / 255
+                # cv2.imshow('bin_image_cropped_border', bin_image_cropped)
+                # cv2.imshow('bin_image',bin_image)
+                # cv2.imshow('foundObject',foundObject)
+                # cv2.imshow('foundObject_border',foundObject_border)
+                # cv2.imshow('binary_border',binary_border)
+                # qqq = cv2.imread('HueScale.png')
+                ###########gray = foundObjectToGray(foundObject)
+                ###########hue = foundObject_hue(foundObject)
+
+                ###########bbb = "{0} = Hue".format(round(hue))
+                ###########ccc = "{0} = Gray".format(gray)
+                ###########print(bbb)
+                ###########rint(ccc)
+                # Write some Text
+                # cv2.putText(foundObject_border, bbb,(0,10), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
+                # cv2.putText(foundObject_border, ccc, (0,20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
+
+                # nacte soubor se zapsanymi rozsahy barev a nazvy a kazdy pixel porovna a prislusnou barvu inkreementuje
+                # www = getTextColorFromRGB(foundObject)
+                # print(www)
+
+                # txt = "{}x{} - brick".format(round(stranaA), round(stranaB))
+                # txt2 = "{} - color".format(www)
+                # cv2.putText(foundObject_border, txt, (0, 13), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
+                # cv2.putText(foundObject_border, txt2, (0, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
+
+                ts = int(time.time())
+                immmm = Image.fromarray(foundObject_border)
+                immmm.save("images\\objectFound{}.bmp".format(ts))
+                # cv2.imshow('images\\aaaaaaaaaaaaaaaa', foundObject)
+
+                kernel2 = np.ones((10, 10), np.uint8)
+                # protoze po rotaci obrazu zustavaji na krajich dirky a nepresnosti, jeste se pred vytvorenim obrysu hrany vyhladi
+                bin_image = cv2.morphologyEx(np.uint8(bin_image), cv2.MORPH_CLOSE, kernel2)
+                bin_image_cropped = cv2.morphologyEx(np.uint8(bin_image_cropped), cv2.MORPH_CLOSE, kernel2)
+                print('angle = ', angle)
+                rotated_bin_img = rotate_image(bin_image_cropped, angle)
+
+                rotated_bin_img = cv2.morphologyEx(np.uint8(rotated_bin_img), cv2.MORPH_CLOSE, kernel2)
+                rotated_bin_img = cv2.morphologyEx(np.uint8(rotated_bin_img), cv2.MORPH_OPEN, kernel2)
+
+                plt.figure(7, figsize=(16, 5))
+                plt.figure(7).subplots_adjust(bottom=0.015, left=0.025, top=0.91, right=0.98, hspace=0.03, wspace=0.05)
+                plt.subplot(131)
+                plt.title("binary image")
+                plt.imshow(bin_image, cmap='gray')
+                plt.axis('off')
+
+                # plt.figure(7).subplots_adjust(bottom=0.015, left=0.025, top=0.988, right=0.98,hspace = 0.03, wspace = 0.05)
+                plt.figure(7, sharex=True, sharey=True)
+                plt.subplot(132)
+                plt.title("angle = {:.1f}".format(angle))
+                plt.imshow(rotated_bin_img, cmap='gray')
+                plt.axis('off')
+
+                ax7.imshow(rotated_bin_img, cmap='gray')  # extent=[0,w,h,0], aspect='auto'
+                ax7.set_title("Rotated Img")
+                ax7.axis("off")
+                # ax7.set_adjustable('box-forced')
+                chain_code_final = chain_code(rotated_bin_img)
+                plt.figure(7)
+                plt.subplot(133)
+                if chain_code_final is not None:
+                    plt.title("chain code = ".__add__(np.array_str(chain_code_final)))
+                else:
+                    plt.title("chain code = ".__add__('ERROR - Neni binarni img v chain_code()!'))
+
+                plt.figure(7).savefig(pathToFigFolder.__add__('\\saveFig{}ChainCode.png'.format(imageNumber)))
+                figure.savefig(pathToFigFolder.__add__('\\saveFig{}.png'.format(imageNumber)))
+                figure.clf()
+
+        print('\nDONE!!!')
 
 
     # import colorsys
@@ -680,4 +1072,4 @@ if __name__ == '__main__':
 
 
 
-    plt.show()
+    #plt.show()
